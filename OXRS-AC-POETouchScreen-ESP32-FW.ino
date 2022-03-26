@@ -1,28 +1,28 @@
 /**
-  GPIO LED controller firmware for the Open eXtensible Rack System
+  Ethernet POE touchscreen firmware for the Open eXtensible Rack System
   
-  See https://oxrs.io/docs/firmware/led-controller-esp32.html for documentation.
+  See https://oxrs.io/docs/firmware/poe-touchscreen-esp32.html for documentation.
 
   Compile options:
-    Wemos D1 Mini
+    ESP32
     
   External dependencies. Install using the Arduino library manager:
     "PubSubClient" by Nick O'Leary
     "OXRS-IO-MQTT-ESP32-LIB" by OXRS Core Team
     "OXRS-IO-API-ESP32-LIB" by OXRS Core Team
     "OXRS-AC-I2CSensors-ESP-LIB" by Austins Creations
-    "ledPWM" by Austins Creations (embedded)
+    "ledPWM" by Austins Creations
 
-  Compatible with 5 channel LED controller shield for LilyGO found here:
-    https://github.com/austinscreations/D1mini_PWM
+  Compatible with WT32-SC01 Ethernet POE shield found here:
+    https://github.com/austinscreations/WT32-SC01_Ethernet_POE
 
   GitHub repository:
-    https://github.com/austinscreations/OXRS-AC-GPIOLedController-ESP8266-FW
+    https://github.com/austinscreations/OXRS-AC-POETouchScreen-ESP32-FW
     
   Bugs/Features:
     See GitHub issues list
 
-  Copyright 2021 Austins Creations
+  Copyright 2022 Austins Creations
 */
 
 /*--------------------------- Version ------------------------------------*/
