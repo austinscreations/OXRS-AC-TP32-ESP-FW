@@ -1,18 +1,53 @@
-#include <Arduino.h>
-#include <WiFi.h> 
-#include <SPI.h>
-#include <Ethernet.h>
-#include <OXRS_MQTT.h>                // For MQTT
-#include <OXRS_API.h>                 // For REST API
+/**
+  GPIO LED controller firmware for the Open eXtensible Rack System
+  
+  See https://oxrs.io/docs/firmware/led-controller-esp32.html for documentation.
+
+  Compile options:
+    Wemos D1 Mini
+    
+  External dependencies. Install using the Arduino library manager:
+    "PubSubClient" by Nick O'Leary
+    "OXRS-IO-MQTT-ESP32-LIB" by OXRS Core Team
+    "OXRS-IO-API-ESP32-LIB" by OXRS Core Team
+    "OXRS-AC-I2CSensors-ESP-LIB" by Austins Creations
+    "ledPWM" by Austins Creations (embedded)
+
+  Compatible with 5 channel LED controller shield for LilyGO found here:
+    https://github.com/austinscreations/D1mini_PWM
+
+  GitHub repository:
+    https://github.com/austinscreations/OXRS-AC-GPIOLedController-ESP8266-FW
+    
+  Bugs/Features:
+    See GitHub issues list
+
+  Copyright 2021 Austins Creations
+*/
 
 /*--------------------------- Version ------------------------------------*/
 #define FW_NAME       "OXRS-AC-POETouchScreen-ESP32-FW"
 #define FW_SHORT_NAME "POE Touch Screen"
 #define FW_MAKER      "Austin's Creations"
-#define FW_VERSION    "0.0.1"
+#define FW_VERSION    "0.0.2"
 
+/*--------------------------- Libraries ----------------------------------*/
+#include <Arduino.h>
+#include <Wire.h>
+#include <WiFi.h>
+#include <SPI.h>
+#include <Ethernet.h>
+#include <OXRS_MQTT.h>              // For MQTT
+#include <OXRS_API.h>               // For REST API
+#include <OXRS_SENSORS.h>           // For QUICC I2C sensors
+
+/*--------------------------- Constants ----------------------------------*/
 // Serial
 #define       SERIAL_BAUD_RATE          115200
+
+// I2C
+#define       I2C_SCL                   19
+#define       I2C_SDA                   18
 
 // REST API
 #define       REST_API_PORT             80
@@ -26,9 +61,10 @@
 #define       DHCP_TIMEOUT_MS           15000
 #define       DHCP_RESPONSE_TIMEOUT_MS  4000
 
-// LCD
+// Display
 #define       DISPLAY_CS_PIN            15
 
+/*--------------------------- Instantiate Global Objects -----------------*/
 // Ethernet client
 EthernetClient client;
 
@@ -40,9 +76,10 @@ OXRS_MQTT mqtt(mqttClient);
 EthernetServer server(REST_API_PORT);
 OXRS_API api(mqtt);
 
-/**
-  Adoption info builders
-*/
+// QUICC I2C sensors
+OXRS_SENSORS sensors(mqtt);
+
+/*--------------------------- Program ------------------------------------*/
 void getFirmwareJson(JsonVariant json)
 {
   JsonObject firmware = json.createNestedObject("firmware");
@@ -77,6 +114,9 @@ void getConfigSchemaJson(JsonVariant json)
   configSchema["type"] = "object";
 
   JsonObject properties = configSchema.createNestedObject("properties");
+
+  // Add any sensor config
+  sensors.setConfigSchema(properties);
 }
 
 void getCommandSchemaJson(JsonVariant json)
@@ -93,6 +133,9 @@ void getCommandSchemaJson(JsonVariant json)
   JsonObject restart = properties.createNestedObject("restart");
   restart["title"] = "Restart";
   restart["type"] = "boolean";
+
+  // Add any sensor commands
+  sensors.setCommandSchema(properties);
 }
 
 /**
@@ -158,7 +201,8 @@ void mqttDisconnected(int state)
 
 void mqttConfig(JsonVariant json)
 {
-
+  // Let the sensors handle any config
+  sensors.conf(json);
 }
 
 void mqttCommand(JsonVariant json)
@@ -167,6 +211,9 @@ void mqttCommand(JsonVariant json)
   {
     ESP.restart();
   }
+
+  // Let the sensors handle any commands
+  sensors.cmnd(json);
 }
 
 void mqttCallback(char * topic, uint8_t * payload, unsigned int length) 
@@ -292,7 +339,10 @@ void setup()
   Serial.print  (F("VERSION:  ")); Serial.println(FW_VERSION);
   Serial.println(F("========================================"));
 
-  // Set the display
+  // Start the I2C bus
+  Wire.begin(I2C_SDA, I2C_SCL);
+  
+  // Set up the display
   pinMode(DISPLAY_CS_PIN, OUTPUT);
   digitalWrite(DISPLAY_CS_PIN, HIGH);
 
@@ -305,6 +355,9 @@ void setup()
 
   // Set up the REST API
   initialiseRestApi();
+
+  // Initialise the I2C sensors
+  sensors.begin();
 }
 
 void loop()
@@ -318,4 +371,7 @@ void loop()
   // Handle any REST API requests
   EthernetClient client = server.available();
   api.checkEthernet(&client);
+  
+  // Publish any sensor reports
+  sensors.tele();
 }
