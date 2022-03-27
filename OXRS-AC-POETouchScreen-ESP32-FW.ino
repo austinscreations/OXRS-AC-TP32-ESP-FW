@@ -7,11 +7,12 @@
     ESP32
     
   External dependencies. Install using the Arduino library manager:
-    "PubSubClient" by Nick O'Leary
-    "OXRS-IO-MQTT-ESP32-LIB" by OXRS Core Team
-    "OXRS-IO-API-ESP32-LIB" by OXRS Core Team
-    "OXRS-AC-I2CSensors-ESP-LIB" by Austins Creations
-    "ledPWM" by Austins Creations
+    [PubSubClient](https://github.com/knolleary/pubsubclient)
+    [OXRS-IO-MQTT-ESP32-LIB](https://github.com/OXRS-IO/OXRS-IO-MQTT-ESP32-LIB)
+    [OXRS-IO-API-ESP32-LIB](https://github.com/OXRS-IO/OXRS-IO-API-ESP32-LIB)
+    [OXRS-AC-I2CSensors-ESP-LIB](https://github.com/austinscreations/OXRS-AC-I2CSensors-ESP-LIB)
+    [ledPWM](https://github.com/austinscreations/ledPWM)
+    [MqttLogger](https://github.com/androbi-com/MqttLogger)
 
   Compatible with WT32-SC01 Ethernet POE shield found here:
     https://github.com/austinscreations/WT32-SC01_Ethernet_POE
@@ -29,7 +30,7 @@
 #define FW_NAME       "OXRS-AC-POETouchScreen-ESP32-FW"
 #define FW_SHORT_NAME "POE Touch Screen"
 #define FW_MAKER      "Austin's Creations"
-#define FW_VERSION    "0.0.2"
+#define FW_VERSION    "0.0.3"
 
 /*--------------------------- Libraries ----------------------------------*/
 #include <Arduino.h>
@@ -40,6 +41,7 @@
 #include <OXRS_MQTT.h>              // For MQTT
 #include <OXRS_API.h>               // For REST API
 #include <OXRS_SENSORS.h>           // For QUICC I2C sensors
+#include <MqttLogger.h>             // For logging
 
 /*--------------------------- Constants ----------------------------------*/
 // Serial
@@ -78,6 +80,9 @@ OXRS_API api(mqtt);
 
 // QUICC I2C sensors
 OXRS_SENSORS sensors(mqtt);
+
+// Logging
+MqttLogger logger(mqttClient, "log", MqttLoggerMode::MqttAndSerial);
 
 /*--------------------------- Program ------------------------------------*/
 void getFirmwareJson(JsonVariant json)
@@ -155,12 +160,17 @@ void apiAdopt(JsonVariant json)
 */
 void mqttConnected() 
 {
+  // MqttLogger doesn't copy the logging topic to an internal
+  // buffer so we have to use a static array here
+  static char logTopic[64];
+  logger.setTopic(mqtt.getLogTopic(logTopic));
+  
   // Publish device adoption info
   DynamicJsonDocument json(JSON_ADOPT_MAX_SIZE);
   mqtt.publishAdopt(api.getAdopt(json.as<JsonVariant>()));
 
   // Log the fact we are now connected
-  Serial.println("[wt32] mqtt connected");
+  logger.println("[wt32] mqtt connected");
 }
 
 void mqttDisconnected(int state) 
@@ -170,31 +180,31 @@ void mqttDisconnected(int state)
   switch (state)
   {
     case MQTT_CONNECTION_TIMEOUT:
-      Serial.println(F("[wt32] mqtt connection timeout"));
+      logger.println(F("[wt32] mqtt connection timeout"));
       break;
     case MQTT_CONNECTION_LOST:
-      Serial.println(F("[wt32] mqtt connection lost"));
+      logger.println(F("[wt32] mqtt connection lost"));
       break;
     case MQTT_CONNECT_FAILED:
-      Serial.println(F("[wt32] mqtt connect failed"));
+      logger.println(F("[wt32] mqtt connect failed"));
       break;
     case MQTT_DISCONNECTED:
-      Serial.println(F("[wt32] mqtt disconnected"));
+      logger.println(F("[wt32] mqtt disconnected"));
       break;
     case MQTT_CONNECT_BAD_PROTOCOL:
-      Serial.println(F("[wt32] mqtt bad protocol"));
+      logger.println(F("[wt32] mqtt bad protocol"));
       break;
     case MQTT_CONNECT_BAD_CLIENT_ID:
-      Serial.println(F("[wt32] mqtt bad client id"));
+      logger.println(F("[wt32] mqtt bad client id"));
       break;
     case MQTT_CONNECT_UNAVAILABLE:
-      Serial.println(F("[wt32] mqtt unavailable"));
+      logger.println(F("[wt32] mqtt unavailable"));
       break;
     case MQTT_CONNECT_BAD_CREDENTIALS:
-      Serial.println(F("[wt32] mqtt bad credentials"));
+      logger.println(F("[wt32] mqtt bad credentials"));
       break;      
     case MQTT_CONNECT_UNAUTHORIZED:
-      Serial.println(F("[wt32] mqtt unauthorised"));
+      logger.println(F("[wt32] mqtt unauthorised"));
       break;      
   }
 }
@@ -223,16 +233,16 @@ void mqttCallback(char * topic, uint8_t * payload, unsigned int length)
   switch (state)
   {
     case MQTT_RECEIVE_ZERO_LENGTH:
-      Serial.println(F("[wt32] empty mqtt payload received"));
+      logger.println(F("[wt32] empty mqtt payload received"));
       break;
     case MQTT_RECEIVE_JSON_ERROR:
-      Serial.println(F("[wt32] failed to deserialise mqtt json payload"));
+      logger.println(F("[wt32] failed to deserialise mqtt json payload"));
       break;
     case MQTT_RECEIVE_NO_CONFIG_HANDLER:
-      Serial.println(F("[wt32] no mqtt config handler"));
+      logger.println(F("[wt32] no mqtt config handler"));
       break;
     case MQTT_RECEIVE_NO_COMMAND_HANDLER:
-      Serial.println(F("[wt32] no mqtt command handler"));
+      logger.println(F("[wt32] no mqtt command handler"));
       break;
   }
 }
@@ -252,8 +262,8 @@ void initialiseEthernet(byte * mac)
   // Display the MAC address on serial
   char mac_display[18];
   sprintf_P(mac_display, PSTR("%02X:%02X:%02X:%02X:%02X:%02X"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-  Serial.print(F("[wt32] mac address: "));
-  Serial.println(mac_display);
+  logger.print(F("[wt32] mac address: "));
+  logger.println(mac_display);
 
   // Initialise ethernet library
   Ethernet.init(ETHERNET_CS_PIN);
@@ -271,19 +281,19 @@ void initialiseEthernet(byte * mac)
   SPI.begin(ETH_SCLK, ETH_MISO, ETH_MOSI, ETHERNET_CS_PIN);
 
   // Get an IP address via DHCP and display on serial
-  Serial.print(F("[wt32] ip address: "));
+  logger.print(F("[wt32] ip address: "));
   if (Ethernet.begin(mac, DHCP_TIMEOUT_MS, DHCP_RESPONSE_TIMEOUT_MS))
   {
-    Serial.println(Ethernet.localIP());
+    logger.println(Ethernet.localIP());
   }
   else
   {
     if (Ethernet.hardwareStatus() == EthernetNoHardware) {
-      Serial.println(F("ethernet shield not found"));
+      logger.println(F("ethernet shield not found"));
     } else if (Ethernet.linkStatus() == LinkOFF) {
-      Serial.println(F("ethernet cable not connected"));
+      logger.println(F("ethernet cable not connected"));
     } else {
-      Serial.println(F("unknown problem initialising ethernet"));
+      logger.println(F("unknown problem initialising ethernet"));
     }
   }
 }
@@ -329,10 +339,11 @@ void initialiseRestApi(void)
 */
 void setup() 
 {
-  // Startup logging to serial
+  // Start serial and let settle
   Serial.begin(SERIAL_BAUD_RATE);
   delay(1000);
-  Serial.println();
+
+  // Dump firmware details to serial
   Serial.println(F("========================================"));
   Serial.print  (F("FIRMWARE: ")); Serial.println(FW_NAME);
   Serial.print  (F("MAKER:    ")); Serial.println(FW_MAKER);
