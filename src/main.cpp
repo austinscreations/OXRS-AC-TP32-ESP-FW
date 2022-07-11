@@ -385,7 +385,7 @@ void publishScreenEvent(int screenIdx, const char *state)
 void publishBacklightEvent(int brightness)
 {
   StaticJsonDocument<128> json;
-  json["type"] = "“backlight”";
+  json["type"] = "backlight";
   json["event"] = "change";
   json["state"] = (brightness != 0) ? "awake" : "sleep" ;
   json["brightness"] = brightness;
