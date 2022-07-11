@@ -5,7 +5,7 @@ extern void _setBackLightLED(int val);
 extern lv_color_t colorOn;
 extern lv_color_t colorBg;
 
-static void _callBackReset(lv_event_t *e)
+static void _callBackRestart(lv_event_t *e)
 {
   _setBackLightLED(0);
   ESP.restart();
@@ -82,20 +82,20 @@ classScreenSettings::classScreenSettings(lv_obj_t *parent, const void *img)
   lv_label_set_text(_sliderLabel2, "50%");
 
   // reset button
-  _btnReset = lv_btn_create(_parent);
+  _btnRestart = lv_btn_create(_parent);
 
-  lv_obj_set_style_bg_opa(_btnReset, WP_OPA_BG_OFF, LV_PART_MAIN | LV_IMGBTN_STATE_RELEASED);
-  lv_obj_set_style_img_recolor(_btnReset, lv_color_hex(0xffffff), LV_PART_MAIN | LV_IMGBTN_STATE_RELEASED);
-  lv_obj_set_style_img_recolor_opa(_btnReset, 255, LV_PART_MAIN | LV_IMGBTN_STATE_RELEASED);
-  lv_obj_set_size(_btnReset, 100, 50);
-  lv_obj_align(_btnReset, LV_ALIGN_BOTTOM_RIGHT, -5, -30);
+  lv_obj_set_style_bg_opa(_btnRestart, WP_OPA_BG_OFF, LV_PART_MAIN | LV_IMGBTN_STATE_RELEASED);
+  lv_obj_set_style_img_recolor(_btnRestart, lv_color_hex(0xffffff), LV_PART_MAIN | LV_IMGBTN_STATE_RELEASED);
+  lv_obj_set_style_img_recolor_opa(_btnRestart, 255, LV_PART_MAIN | LV_IMGBTN_STATE_RELEASED);
+  lv_obj_set_size(_btnRestart, 150, 50);
+  lv_obj_align(_btnRestart, LV_ALIGN_BOTTOM_RIGHT, -5, -30);
 
-  lv_obj_t *_labelReset = lv_label_create(_btnReset);
-  lv_obj_set_size(_labelReset, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-  lv_obj_center(_labelReset);
-  lv_label_set_text(_labelReset, "Reboot !");
+  lv_obj_t *_labelRestart = lv_label_create(_btnRestart);
+  lv_obj_set_size(_labelRestart, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+  lv_obj_center(_labelRestart);
+  lv_label_set_text(_labelRestart, "Hold to restart...");
 
-  lv_obj_add_event_cb(_btnReset, _callBackReset, LV_EVENT_SHORT_CLICKED, NULL);
+  lv_obj_add_event_cb(_btnRestart, _callBackRestart, LV_EVENT_LONG_PRESSED, NULL);
 }
 
 void classScreenSettings::addEventHandler(lv_event_cb_t callBack)
