@@ -11,7 +11,7 @@ private:
   lv_obj_t *_slider = NULL;
   lv_obj_t *_sliderLabel1 = NULL;
   lv_obj_t *_sliderLabel2 = NULL;
-  lv_obj_t *_btnReset = NULL;
+  lv_obj_t *_btnRestart = NULL;
 
 public:
   classScreenSettings(){};
