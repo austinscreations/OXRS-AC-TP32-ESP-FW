@@ -480,7 +480,7 @@ void publishBacklightEvent(int brightness)
     data->state = LV_INDEV_STATE_PR;
 
 #if defined(TOUCHDEBUG)
-    Serial.print("[TP32] Data x,y ");
+    Serial.print("[tp32] Data x,y ");
     Serial.print(data->point.x);
     Serial.print(",");
     Serial.println(data->point.y);
@@ -1621,7 +1621,7 @@ void publishBacklightEvent(int brightness)
     // Start serial and let settle
     Serial.begin(SERIAL_BAUD_RATE);
     delay(2000);
-    Serial.println(F("[TP32] starting up..."));
+    Serial.println(F("[tp32] starting up..."));
 
     // initialise the Tile_Style_LUT and Img_LUT for later use
     initStyleLut();
@@ -1635,7 +1635,7 @@ void publishBacklightEvent(int brightness)
     // start lvgl
     lv_init();
     lv_img_cache_set_size(10);
-    String LVGL_Arduino = "[TP32] LVGL starting ";
+    String LVGL_Arduino = "[tp32] LVGL starting ";
     LVGL_Arduino += String('V') + lv_version_major() + "." + lv_version_minor() + "." + lv_version_patch();
     Serial.println(LVGL_Arduino);
 #if LV_USE_LOG != 0
@@ -1703,7 +1703,7 @@ void publishBacklightEvent(int brightness)
   // show HomeScreen
   screenVault.show(SCREEN_HOME);
 
-  Serial.println("[TP32] Setup done");
+  Serial.println("[tp32] Setup done");
 }
 
 /**
