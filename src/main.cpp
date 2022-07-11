@@ -554,9 +554,9 @@ void publishBacklightEvent(int brightness)
     lv_table_set_col_cnt(table, 2);
 
     lv_table_set_cell_value(table, 0, 0, "Name:");
-    lv_table_set_cell_value(table, 0, 1, STRINGIFY(FW_NAME));
+    lv_table_set_cell_value(table, 0, 1, FW_NAME);
     lv_table_set_cell_value(table, 1, 0, "Maker:");
-    lv_table_set_cell_value(table, 1, 1, STRINGIFY(FW_MAKER));
+    lv_table_set_cell_value(table, 1, 1, FW_MAKER);
     lv_table_set_cell_value(table, 2, 0, "Version:");
     lv_table_set_cell_value(table, 2, 1, STRINGIFY(FW_VERSION));
 
