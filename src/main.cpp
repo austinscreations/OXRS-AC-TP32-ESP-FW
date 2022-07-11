@@ -479,10 +479,12 @@ void publishBacklightEvent(int brightness)
     data->point.y = ts.y;
     data->state = LV_INDEV_STATE_PR;
 
+#if defined(TOUCHDEBUG)
     Serial.print("Data x,y ");
     Serial.print(data->point.x);
     Serial.print(",");
     Serial.println(data->point.y);
+#endif
   }
 
   // check for timeout inactivity timeout
