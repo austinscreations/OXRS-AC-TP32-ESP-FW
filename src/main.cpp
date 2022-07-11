@@ -480,9 +480,9 @@ void publishBacklightEvent(int brightness)
     data->state = LV_INDEV_STATE_PR;
 
 #if defined(TOUCHDEBUG)
-    Serial.print("[tp32] Data x,y ");
+    Serial.print(F("[tp32] Data x,y "));
     Serial.print(data->point.x);
-    Serial.print(",");
+    Serial.print(F(","));
     Serial.println(data->point.y);
 #endif
   }
