@@ -1635,9 +1635,12 @@ void publishBacklightEvent(int brightness)
     // start lvgl
     lv_init();
     lv_img_cache_set_size(10);
-    String LVGL_Arduino = "[tp32] LVGL starting ";
-    LVGL_Arduino += String('V') + lv_version_major() + "." + lv_version_minor() + "." + lv_version_patch();
-    Serial.println(LVGL_Arduino);
+    Serial.print(F("[tp32] lvgl starting v"));
+    Serial.print(lv_version_major());
+    Serial.print(F("."));
+    Serial.print(lv_version_minor());
+    Serial.print(F("."));
+    Serial.println(lv_version_patch());
 #if LV_USE_LOG != 0
   lv_log_register_print_cb(my_print); // register print function for debugging
 #endif
@@ -1703,7 +1706,7 @@ void publishBacklightEvent(int brightness)
   // show HomeScreen
   screenVault.show(SCREEN_HOME);
 
-  Serial.println("[tp32] Setup done");
+  Serial.println(F("[tp32] Setup done"));
 }
 
 /**
