@@ -481,9 +481,9 @@ void my_touchpad_read(lv_indev_drv_t * indev_driver, lv_indev_data_t * data)
   data->state = LV_INDEV_STATE_PR;
 
 #if defined(DEBUG_TOUCH)
-  Serial.print("Data x,y ");
+  Serial.print(F("[tp32] Data x,y "));
   Serial.print(data->point.x);
-  Serial.print(",");
+  Serial.print(F(","));
   Serial.println(data->point.y);
 #endif
 }
@@ -1625,8 +1625,8 @@ void setup()
 {
   // Start serial and let settle
   Serial.begin(SERIAL_BAUD_RATE);
-  delay(1000);
-  Serial.println(F("[wpan] starting up..."));
+  delay(2000);
+  Serial.println(F("[tp32] starting up..."));
 
   // initialise the Tile_Style_LUT and Img_LUT for later use
   initStyleLut();
@@ -1697,8 +1697,6 @@ void setup()
   // start the screen to make sure everything is initialised
   ui_init();
 
-  Serial.println("Setup done");
-
   // Start WT32 hardware
   wt32.begin(jsonConfig, jsonCommand);
 
@@ -1710,6 +1708,8 @@ void setup()
 
   // show HomeScreen
   screenVault.show(SCREEN_HOME);
+
+  Serial.println(F("[tp32] Setup done"));
 }
 
 /**
