@@ -480,10 +480,12 @@ void my_touchpad_read(lv_indev_drv_t * indev_driver, lv_indev_data_t * data)
   data->point.y = ts.y;
   data->state = LV_INDEV_STATE_PR;
 
-  Serial.print("Data x,y ");
+#if defined(DEBUG_TOUCH)
+  Serial.print(F("[tp32] Data x,y "));
   Serial.print(data->point.x);
-  Serial.print(",");
+  Serial.print(F(","));
   Serial.println(data->point.y);
+#endif
 }
 
 // check for timeout inactivity timeout
@@ -944,7 +946,7 @@ void createTile(const char *styleStr, int screenIdx, int tileIdx, const char *ic
   style = parseInputStyle(styleStr);
   if (!style)
   {
-    wt32.print(F("[wpan] invalid style for screen/tile : "));
+    wt32.print(F("[tp32] invalid style for screen/tile : "));
     wt32.print(screenIdx);
     wt32.print(F("/"));
     wt32.println(tileIdx);
@@ -1003,7 +1005,7 @@ void createTile(const char *styleStr, int screenIdx, int tileIdx, const char *ic
       // allow increasing only (Stop > Start)
       if(levelStop < levelStart)
       {
-        wt32.println(F("[wpan] invalid level range."));
+        wt32.println(F("[tp32] invalid level range."));
       }
       else
       {
@@ -1079,7 +1081,7 @@ void jsonTilesConfig(int screenIdx, JsonVariant json)
 {
   if ((screenIdx < SCREEN_START) || (screenIdx > SCREEN_END))
   {
-    wt32.print(F("[wpan] invalid screen: "));
+    wt32.print(F("[tp32] invalid screen: "));
     wt32.println(screenIdx);
     return;
   }
@@ -1087,7 +1089,7 @@ void jsonTilesConfig(int screenIdx, JsonVariant json)
   int tileIdx = json["tile"].as<int>();
   if ((tileIdx < TILE_START) || (tileIdx > TILE_END))
   {
-    wt32.print(F("[wpan] invalid tile: "));
+    wt32.print(F("[tp32] invalid tile: "));
     wt32.println(tileIdx);
     return;
   }
@@ -1236,7 +1238,7 @@ void screenConfigSchema(JsonVariant json)
 
   // default ON color
   JsonObject color = json.createNestedObject("color");
-  color["title"] = "Defaut Icon Color for ON state.";
+  color["title"] = "Default Icon Color for ON state.";
   color["description"] = "Set your preferred RGB values.(Default [91, 190, 91])";
 
   JsonObject properties4 = color.createNestedObject("properties");
@@ -1359,7 +1361,7 @@ void jsonTilesCommand(JsonVariant json)
   int screenIdx = json["screen"].as<int>();
   if ((screenIdx < SCREEN_START) || (screenIdx > SCREEN_END))
   {
-    wt32.print(F("[wpan] invalid screen: "));
+    wt32.print(F("[tp32] invalid screen: "));
     wt32.println(screenIdx);
     return;
   }
@@ -1367,7 +1369,7 @@ void jsonTilesCommand(JsonVariant json)
   int tileIdx = json["tile"].as<int>();
   if ((tileIdx < TILE_START) || (tileIdx > TILE_END))
   {
-    wt32.print(F("[wpan] invalid tile: "));
+    wt32.print(F("[tp32] invalid tile: "));
     wt32.println(tileIdx);
     return;
   }
@@ -1375,7 +1377,7 @@ void jsonTilesCommand(JsonVariant json)
   classTile *tile = tileVault.get(screenIdx, tileIdx);
   if (!tile)
   {
-    wt32.print(F("[wpan] screen/tile not found: "));
+    wt32.print(F("[tp32] screen/tile not found: "));
     wt32.print(screenIdx);
     wt32.print(F("/"));
     wt32.println(tileIdx);
@@ -1395,7 +1397,7 @@ void jsonTilesCommand(JsonVariant json)
     }
     else
     {
-      wt32.print(F("[wpan] invalid state: "));
+      wt32.print(F("[tp32]] invalid state: "));
       wt32.println(state);
     }
   }
@@ -1554,7 +1556,7 @@ void jsonCommand(JsonVariant json)
   {
     int screenIdx = json["screens"]["load"].as<int>();
 
-    wt32.print(F("[wpan] screen select: "));
+    wt32.print(F("[tp32] screen select: "));
     wt32.println(screenIdx);
 
     selectScreen(screenIdx);
@@ -1623,8 +1625,8 @@ void setup()
 {
   // Start serial and let settle
   Serial.begin(SERIAL_BAUD_RATE);
-  delay(1000);
-  Serial.println(F("[wpan] starting up..."));
+  delay(2000);
+  Serial.println(F("[tp32] starting up..."));
 
   // initialise the Tile_Style_LUT and Img_LUT for later use
   initStyleLut();
@@ -1638,10 +1640,12 @@ void setup()
   // start lvgl
   lv_init();
   lv_img_cache_set_size(10);
-  String LVGL_Arduino = "Hello Arduino! ";
-  LVGL_Arduino += String('V') + lv_version_major() + "." + lv_version_minor() + "." + lv_version_patch();
-  Serial.println(LVGL_Arduino);
-  Serial.println("I am LVGL_Arduino");
+  Serial.print(F("[tp32] lvgl starting v"));
+  Serial.print(lv_version_major());
+  Serial.print(F("."));
+  Serial.print(lv_version_minor());
+  Serial.print(F("."));
+  Serial.println(lv_version_patch());
 #if LV_USE_LOG != 0
   lv_log_register_print_cb(my_print); // register print function for debugging
 #endif
@@ -1695,8 +1699,6 @@ void setup()
   // start the screen to make sure everything is initialised
   ui_init();
 
-  Serial.println("Setup done");
-
   // Start WT32 hardware
   wt32.begin(jsonConfig, jsonCommand);
 
@@ -1708,6 +1710,8 @@ void setup()
 
   // show HomeScreen
   screenVault.show(SCREEN_HOME);
+
+  Serial.println(F("[tp32] Setup done"));
 }
 
 /**
