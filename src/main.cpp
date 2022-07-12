@@ -1640,10 +1640,12 @@ void setup()
   // start lvgl
   lv_init();
   lv_img_cache_set_size(10);
-  String LVGL_Arduino = "Hello Arduino! ";
-  LVGL_Arduino += String('V') + lv_version_major() + "." + lv_version_minor() + "." + lv_version_patch();
-  Serial.println(LVGL_Arduino);
-  Serial.println("I am LVGL_Arduino");
+  Serial.print(F("[tp32] lvgl starting v"));
+  Serial.print(lv_version_major());
+  Serial.print(F("."));
+  Serial.print(lv_version_minor());
+  Serial.print(F("."));
+  Serial.println(lv_version_patch());
 #if LV_USE_LOG != 0
   lv_log_register_print_cb(my_print); // register print function for debugging
 #endif
