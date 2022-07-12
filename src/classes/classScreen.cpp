@@ -39,16 +39,17 @@ classScreen::classScreen(int number, int style)
 
     container = cont;
   }
+
   // middle "button" for screen selection drop down
   _btnFooter = lv_imgbtn_create(screen);
   lv_imgbtn_set_src(_btnFooter, LV_IMGBTN_STATE_RELEASED, NULL, NULL, NULL);
   lv_obj_set_size(_btnFooter, 200, 40);
   lv_obj_align(_btnFooter, LV_ALIGN_BOTTOM_MID, 0, 0);
 
-  _label = lv_label_create(screen);
-  lv_obj_align(_label, LV_ALIGN_BOTTOM_MID, 0, -5);
-  lv_obj_set_style_text_font(_label, &lv_font_montserrat_20, 0);
-  lv_label_set_text_fmt(_label, "Screen %d", screenIdx);
+  _labelFooter = lv_label_create(screen);
+  lv_obj_align(_labelFooter, LV_ALIGN_BOTTOM_MID, 0, -5);
+  lv_obj_set_style_text_font(_labelFooter, &lv_font_montserrat_20, 0);
+  lv_label_set_text_fmt(_labelFooter, "Screen %d", screenIdx);
 
   _labelWarning = lv_label_create(screen);
   lv_obj_align(_labelWarning, LV_ALIGN_BOTTOM_RIGHT, -45, -5);
@@ -62,12 +63,31 @@ int classScreen::getScreenNumber(void)
 
 void classScreen::setLabel(const char *labelText)
 {
-  lv_label_set_text(_label, labelText);
+  strcpy(screenLabel, labelText);
+  setFooter(screenLabel);
 }
 
 const char *classScreen::getLabel(void)
 {
-  return lv_label_get_text(_label);
+  return screenLabel;
+}
+
+void classScreen::setFooter(const char *footerText)
+{
+  // if the footer has been cleared, then display the screen label (default)
+  if (strlen(footerText) == 0)
+  {
+    lv_label_set_text(_labelFooter, screenLabel);
+  }
+  else
+  {
+    lv_label_set_text(_labelFooter, footerText);
+  }
+}
+
+const char *classScreen::getFooter(void)
+{
+  return lv_label_get_text(_labelFooter);
 }
 
 void classScreen::updateBgColor(void)
