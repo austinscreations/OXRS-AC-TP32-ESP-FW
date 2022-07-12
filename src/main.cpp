@@ -1238,7 +1238,7 @@ void screenConfigSchema(JsonVariant json)
 
   // default ON color
   JsonObject color = json.createNestedObject("color");
-  color["title"] = "Defaut Icon Color for ON state.";
+  color["title"] = "Default Icon Color for ON state.";
   color["description"] = "Set your preferred RGB values.(Default [91, 190, 91])";
 
   JsonObject properties4 = color.createNestedObject("properties");
