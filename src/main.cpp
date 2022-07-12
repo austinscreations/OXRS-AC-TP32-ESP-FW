@@ -480,10 +480,12 @@ void my_touchpad_read(lv_indev_drv_t * indev_driver, lv_indev_data_t * data)
   data->point.y = ts.y;
   data->state = LV_INDEV_STATE_PR;
 
+#if defined(DEBUG_TOUCH)
   Serial.print("Data x,y ");
   Serial.print(data->point.x);
   Serial.print(",");
   Serial.println(data->point.y);
+#endif
 }
 
 // check for timeout inactivity timeout
