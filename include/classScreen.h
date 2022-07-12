@@ -5,7 +5,7 @@ class classScreen
 {
 private:
   lv_obj_t *_parent = NULL;
-  lv_obj_t *_label = NULL;
+  lv_obj_t *_labelFooter = NULL;
   lv_obj_t *_labelWarning = NULL;
   lv_obj_t *_btnHome = NULL;
   lv_obj_t *_btnHomeImg;
@@ -15,6 +15,8 @@ private:
 
 public:
   int screenIdx;
+  char screenLabel[32];
+
   lv_obj_t *screen = NULL;
   lv_obj_t *container = NULL;
 
@@ -23,6 +25,9 @@ public:
   
   void setLabel(const char *labelText);
   const char *getLabel(void);
+  void setFooter(const char *footerText);
+  const char *getFooter(void);
+
   void updateBgColor(void);
   void createHomeButton(lv_event_cb_t callBack, const void *img);
   void createSettingsButton(lv_event_cb_t callBack, const void *img);

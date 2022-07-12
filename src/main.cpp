@@ -395,10 +395,9 @@ void publishBacklightEvent(int brightness)
 
 // publish message box closed Event
 // {"screen":0, "type":"message", "event":"open" , "state":"open"}
-void publishMsgBoxEvent(const char *event, const char *state)
+void publishMessageEvent(const char *event, const char *state)
 {
   StaticJsonDocument<128> json;
-  json["screen"] = 0;
   json["type"] = "message";
   json["event"] = event;
   json["state"] = state;
@@ -602,12 +601,6 @@ void updateConnectionStatus(void)
   }
 }
 
-// screen selection via mqtt
-void selectScreen(int screenIdx)
-{
-  screenVault.show(screenIdx);
-}
-
 /*--------------------------- Event Handler ------------------------------------*/
 
 // screen event handler
@@ -632,7 +625,7 @@ void msgBoxClosedEventHandler(lv_event_t * e)
 {
   lv_event_code_t code = lv_event_get_code(e);
   if (code == LV_EVENT_DELETE)
-    publishMsgBoxEvent("close", "closed");
+    publishMessageEvent("close", "closed");
 }
 
 // Up / Down Button Event Handler
@@ -877,20 +870,6 @@ static void backLightSliderEventHandler(lv_event_t * e)
   {
     _setBackLight(lv_slider_get_value(slider));
   }
-}
-
-// show modal message box on screen
-void _showMsgBox(const char *title, const char *text)
-{
-  lv_obj_t *mbox1 = lv_msgbox_create(NULL, title, text, NULL, true);
-
-  lv_obj_t *cbtn = lv_msgbox_get_close_btn(mbox1);
-  lv_obj_set_style_bg_color(cbtn, lv_color_make(128, 30, 0), 0);
-  lv_obj_set_style_bg_opa(cbtn, 255, 0);
-  lv_obj_center(mbox1);
-
-  lv_obj_add_event_cb(mbox1, msgBoxClosedEventHandler, LV_EVENT_ALL, NULL);
-  publishMsgBoxEvent("open", "open");
 }
 
 // create screen for tiles in screenVault if not exists
@@ -1356,7 +1335,44 @@ void jsonSetBackLightCommand(JsonVariant json)
   }
 }
 
-void jsonTilesCommand(JsonVariant json)
+void jsonShowMessage(JsonVariant json)
+{
+  lv_obj_t *mbox1 = lv_msgbox_create(NULL, json["title"], json["text"], NULL, true);
+
+  lv_obj_t *cbtn = lv_msgbox_get_close_btn(mbox1);
+  lv_obj_set_style_bg_color(cbtn, lv_color_make(128, 30, 0), 0);
+  lv_obj_set_style_bg_opa(cbtn, 255, 0);
+  lv_obj_center(mbox1);
+
+  lv_obj_add_event_cb(mbox1, msgBoxClosedEventHandler, LV_EVENT_ALL, NULL);
+  publishMessageEvent("open", "open");
+}
+
+void jsonScreenCommand(JsonVariant json)
+{
+  int screenIdx = json["screen"].as<int>();
+  if ((screenIdx < SCREEN_START) || (screenIdx > SCREEN_END))
+  {
+    wt32.print(F("[tp32] invalid screen: "));
+    wt32.println(screenIdx);
+    return;
+  }
+
+  classScreen *screen = screenVault.get(screenIdx);
+  if (!screen)
+  {
+    wt32.print(F("[tp32] screen not found: "));
+    wt32.println(screenIdx);
+    return;
+  }
+
+  if (json.containsKey("footer"))
+  {
+    screen->setFooter(json["footer"]);
+  }
+}
+
+void jsonTileCommand(JsonVariant json)
 {
   int screenIdx = json["screen"].as<int>();
   if ((screenIdx < SCREEN_START) || (screenIdx > SCREEN_END))
@@ -1536,30 +1552,33 @@ void jsonCommand(JsonVariant json)
 
   if (json.containsKey("message"))
   {
-    _showMsgBox(json["message"]["title"], json["message"]["text"]);
+    jsonShowMessage(json["message"]);
+  }
+
+  if (json.containsKey("screen"))
+  {
+    screenVault.show(json["screen"]["load"].as<int>());
+  }
+
+  if (json.containsKey("screens"))
+  {
+    for (JsonVariant screen : json["screens"].as<JsonArray>())
+    {
+      jsonScreenCommand(screen);
+    }
   }
 
   if (json.containsKey("tiles"))
   {
-    for (JsonVariant states : json["tiles"].as<JsonArray>())
+    for (JsonVariant tile : json["tiles"].as<JsonArray>())
     {
-      jsonTilesCommand(states);
+      jsonTileCommand(tile);
     }
   }
 
   if (json.containsKey("keyPad"))
   {
     jsonSetLockStateCommand(json["keyPad"]["state"]);
-  }
-
-  if (json.containsKey("screens"))
-  {
-    int screenIdx = json["screens"]["load"].as<int>();
-
-    wt32.print(F("[tp32] screen select: "));
-    wt32.println(screenIdx);
-
-    selectScreen(screenIdx);
   }
 
   if (json.containsKey("addIcon"))
