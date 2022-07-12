@@ -946,7 +946,7 @@ void createTile(const char *styleStr, int screenIdx, int tileIdx, const char *ic
   style = parseInputStyle(styleStr);
   if (!style)
   {
-    wt32.print(F("[wpan] invalid style for screen/tile : "));
+    wt32.print(F("[tp32] invalid style for screen/tile : "));
     wt32.print(screenIdx);
     wt32.print(F("/"));
     wt32.println(tileIdx);
@@ -1005,7 +1005,7 @@ void createTile(const char *styleStr, int screenIdx, int tileIdx, const char *ic
       // allow increasing only (Stop > Start)
       if(levelStop < levelStart)
       {
-        wt32.println(F("[wpan] invalid level range."));
+        wt32.println(F("[tp32] invalid level range."));
       }
       else
       {
@@ -1081,7 +1081,7 @@ void jsonTilesConfig(int screenIdx, JsonVariant json)
 {
   if ((screenIdx < SCREEN_START) || (screenIdx > SCREEN_END))
   {
-    wt32.print(F("[wpan] invalid screen: "));
+    wt32.print(F("[tp32] invalid screen: "));
     wt32.println(screenIdx);
     return;
   }
@@ -1089,7 +1089,7 @@ void jsonTilesConfig(int screenIdx, JsonVariant json)
   int tileIdx = json["tile"].as<int>();
   if ((tileIdx < TILE_START) || (tileIdx > TILE_END))
   {
-    wt32.print(F("[wpan] invalid tile: "));
+    wt32.print(F("[tp32] invalid tile: "));
     wt32.println(tileIdx);
     return;
   }
@@ -1361,7 +1361,7 @@ void jsonTilesCommand(JsonVariant json)
   int screenIdx = json["screen"].as<int>();
   if ((screenIdx < SCREEN_START) || (screenIdx > SCREEN_END))
   {
-    wt32.print(F("[wpan] invalid screen: "));
+    wt32.print(F("[tp32] invalid screen: "));
     wt32.println(screenIdx);
     return;
   }
@@ -1369,7 +1369,7 @@ void jsonTilesCommand(JsonVariant json)
   int tileIdx = json["tile"].as<int>();
   if ((tileIdx < TILE_START) || (tileIdx > TILE_END))
   {
-    wt32.print(F("[wpan] invalid tile: "));
+    wt32.print(F("[tp32] invalid tile: "));
     wt32.println(tileIdx);
     return;
   }
@@ -1377,7 +1377,7 @@ void jsonTilesCommand(JsonVariant json)
   classTile *tile = tileVault.get(screenIdx, tileIdx);
   if (!tile)
   {
-    wt32.print(F("[wpan] screen/tile not found: "));
+    wt32.print(F("[tp32] screen/tile not found: "));
     wt32.print(screenIdx);
     wt32.print(F("/"));
     wt32.println(tileIdx);
@@ -1397,7 +1397,7 @@ void jsonTilesCommand(JsonVariant json)
     }
     else
     {
-      wt32.print(F("[wpan] invalid state: "));
+      wt32.print(F("[tp32]] invalid state: "));
       wt32.println(state);
     }
   }
@@ -1556,7 +1556,7 @@ void jsonCommand(JsonVariant json)
   {
     int screenIdx = json["screens"]["load"].as<int>();
 
-    wt32.print(F("[wpan] screen select: "));
+    wt32.print(F("[tp32] screen select: "));
     wt32.println(screenIdx);
 
     selectScreen(screenIdx);
