@@ -409,16 +409,6 @@ void publishMessageEvent(const char *event, const char *state)
   wt32.publishStatus(json.as<JsonVariant>());
 }
 
-// publish local Backlight change
-//{"backlight:" 50}
-void publishBackLightTelemetry(void)
-{
-  StaticJsonDocument<32> json;
-  json["backlight"] = _actBackLight;
-
-  wt32.publishTelemetry(json.as<JsonVariant>());
-}
-
 /*
     backlight of LCD handling
 */
@@ -629,11 +619,13 @@ void screenEventHandler(lv_event_t * e)
 }
 
 // message box closed event handler
-void msgBoxClosedEventHandler(lv_event_t * e)
+void messageClosedEventHandler(lv_event_t * e)
 {
   lv_event_code_t code = lv_event_get_code(e);
   if (code == LV_EVENT_DELETE)
+  {
     publishMessageEvent("close", "closed");
+  }
 }
 
 // Up / Down Button Event Handler
@@ -1349,7 +1341,7 @@ void jsonShowMessage(JsonVariant json)
   lv_obj_set_style_bg_opa(cbtn, 255, 0);
   lv_obj_center(mbox1);
 
-  lv_obj_add_event_cb(mbox1, msgBoxClosedEventHandler, LV_EVENT_ALL, NULL);
+  lv_obj_add_event_cb(mbox1, messageClosedEventHandler, LV_EVENT_ALL, NULL);
   publishMessageEvent("open", "open");
 }
 
