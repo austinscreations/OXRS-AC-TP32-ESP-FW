@@ -12,6 +12,10 @@
   Copyright 2019-2022 SuperHouse Automation Pty Ltd
 */
 
+// Macro for converting env vars to strings
+#define STRINGIFY(s) STRINGIFY1(s)
+#define STRINGIFY1(s) #s
+
 /*--------------------------- Defines -----------------------------------*/
 // LCD backlight control
 // TFT_BL GPIO pin defined in user_setup.h of tft_eSPI
@@ -488,7 +492,7 @@ void my_touchpad_read(lv_indev_drv_t * indev_driver, lv_indev_data_t * data)
 }
 
 // check for timeout inactivity timeout
-void checkNoAvtivity(void)
+void checkNoActivity(void)
 {
   // observer disabled
   if (_noActivityTimeOutToHome != 0)
@@ -1738,13 +1742,18 @@ void setup()
 */
 void loop()
 {
-  // Let WT32 hardware handle any events etc
+  // let WT32 hardware handle any events etc
   wt32.loop();
+
+  // update our connection status
   updateConnectionStatus();
-  checkNoAvtivity();
+
+  // check any internal timers
+  checkNoActivity();
 
   // let the GUI do its work
   lv_timer_handler();
 
+  // TODO: is this needed?
   delay(3);
 }
