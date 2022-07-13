@@ -415,6 +415,7 @@ void publishBackLightTelemetry(void)
 {
   StaticJsonDocument<32> json;
   json["backlight"] = _actBackLight;
+
   wt32.publishTelemetry(json.as<JsonVariant>());
 }
 
@@ -436,6 +437,7 @@ void _setBackLight(int val)
 {
   _setBackLightLED(val);
   screenSettings.setSlider(val);
+
   publishBacklightEvent(val);
 }
 
@@ -484,10 +486,10 @@ void my_touchpad_read(lv_indev_drv_t * indev_driver, lv_indev_data_t * data)
   data->state = LV_INDEV_STATE_PR;
 
 #if defined(DEBUG_TOUCH)
-  Serial.print(F("[tp32] Data x,y "));
-  Serial.print(data->point.x);
-  Serial.print(F(","));
-  Serial.println(data->point.y);
+  wt32.print(F("[tp32] touch data (x,y): "));
+  wt32.print(data->point.x);
+  wt32.print(F(","));
+  wt32.println(data->point.y);
 #endif
 }
 
@@ -502,7 +504,9 @@ void checkNoActivity(void)
     {
       // time elapsed, jump to HomeScreen
       if (lv_disp_get_inactive_time(NULL) > _noActivityTimeOutToHome)
+      {
         screenVault.show(SCREEN_HOME);
+      }
     }
   }
   if (_noActivityTimeOutToSleep != 0)
@@ -575,7 +579,7 @@ void updateInfoText(void)
   lv_table_set_cell_value(table, 5, 1, buffer);
 
   lv_table_set_cell_value(table, 6, 0, "MODE:");
-  #ifndef WIFI_MODE
+  #if defined(ETH_MODE)
     lv_table_set_cell_value(table, 6, 1, "Ethernet");
   #else
     lv_table_set_cell_value(table, 6, 1, "WiFi");
@@ -1121,8 +1125,8 @@ void screenConfigSchema(JsonVariant json)
 {
   // screens
   JsonObject screens = json.createNestedObject("screens");
-  screens["title"] = "Screen Configuration";
-  screens["description"] = "Add Screen(s). Screen 1 is the HomeScreen and needs to be configured!";
+  screens["title"] = "Screens";
+  screens["description"] = "Add one or more screens to your panel. Screen 1 is the home screen and is mandatory. Index must be between 1-8.";
   screens["type"] = "array";
 
   JsonObject items2 = screens.createNestedObject("items");
@@ -1146,8 +1150,8 @@ void screenConfigSchema(JsonVariant json)
 
   // tiles on screen
   JsonObject tiles = properties2.createNestedObject("tiles");
-  tiles["title"] = "Tile Configuration";
-  tiles["description"] = "Add Tiles to screen.";
+  tiles["title"] = "Tiles";
+  tiles["description"] = "Add one or more tiles to your screen. Index must be between 1-6. 'Linked Screen Index' required for 'link' tiles. 'Level Start/Stop' optional for 'buttonLevelXxx' tiles (defaults to 0/100).";
   tiles["type"] = "array";
 
   JsonObject items3 = tiles.createNestedObject("items");
@@ -1175,19 +1179,16 @@ void screenConfigSchema(JsonVariant json)
 
   JsonObject link = properties3.createNestedObject("link");
   link["title"] = "Linked Screen Index";
-  link["description"] = "Required if Tile Style is 'link'.";
   link["type"] = "integer";
   link["minimum"] = SCREEN_START;
   link["maximum"] = SCREEN_END;
 
   JsonObject levelStart = properties3.createNestedObject("levelStart");
-  levelStart["title"] = "Start value for level control.";
-  levelStart["description"] = "Optional range start if Tile Style is 'buttonLevelxx'.";
+  levelStart["title"] = "Level Start";
   levelStart["type"] = "integer";
 
   JsonObject levelStop = properties3.createNestedObject("levelStop");
-  levelStop["title"] = "Stop value for level control.";
-  levelStop["description"] = "Optional range stop if Tile Style is 'buttonLevelxx'.";
+  levelStop["title"] = "Level Stop";
   levelStop["type"] = "integer";
 
   JsonArray required3 = items3.createNestedArray("required");
@@ -1196,8 +1197,8 @@ void screenConfigSchema(JsonVariant json)
 
   // default Theme color
   JsonObject colortheme = json.createNestedObject("colortheme");
-  colortheme["title"] = "Set Theme Color.";
-  colortheme["description"] = "Enter your preferred RGB values.(Default [0, 0, 0])";
+  colortheme["title"] = "Theme Color";
+  colortheme["description"] = "RGB value for tile background when 'off' (defaults to [0, 0, 0]).";
 
   JsonObject properties5 = colortheme.createNestedObject("properties");
 
@@ -1221,8 +1222,8 @@ void screenConfigSchema(JsonVariant json)
 
   // default ON color
   JsonObject color = json.createNestedObject("color");
-  color["title"] = "Default Icon Color for ON state.";
-  color["description"] = "Set your preferred RGB values.(Default [91, 190, 91])";
+  color["title"] = "Icon 'ON' Color";
+  color["description"] = "RGB value for icon foreground when 'on' (defaults to [91, 190, 91]).";
 
   JsonObject properties4 = color.createNestedObject("properties");
 
@@ -1246,16 +1247,16 @@ void screenConfigSchema(JsonVariant json)
 
   // noActivity timeout
   JsonObject noActivitySecondsToHome = json.createNestedObject("noActivitySecondsToHome");
-  noActivitySecondsToHome["title"] = "Return to HomeScreen after Timeout (seconds) of no activity";
-  noActivitySecondsToHome["description"] = "Display shows HomeScreen after Timeout (seconds) of no activity. 0 disables.";
+  noActivitySecondsToHome["title"] = "Home Screen Timeout (seconds)";
+  noActivitySecondsToHome["description"] = "Return to home screen after a period of in-activity (defaults to 0 which disables the timeout). Must be a number between 0 and 600 (i.e. 10 minutes).";
   noActivitySecondsToHome["type"] = "integer";
   noActivitySecondsToHome["minimum"] = 0;
   noActivitySecondsToHome["maximum"] = 600;
 
   // noActivity timeout
   JsonObject noActivitySecondsToSleep = json.createNestedObject("noActivitySecondsToSleep");
-  noActivitySecondsToSleep["title"] = "Set Screen to sleep (backlight off) after Timeout (seconds) of no activity";
-  noActivitySecondsToSleep["description"] = "Screen is dimmed to 0 after Timeout (seconds) of no activity. 0 disables.";
+  noActivitySecondsToSleep["title"] = "Screen Sleep Timeout (seconds)";
+  noActivitySecondsToSleep["description"] = "Turn off screen backlight after a period of in-activity (defaults to 0 which disables the timeout). Must be a number between 0 and 3600 (i.e. 1 hour).";
   noActivitySecondsToSleep["type"] = "integer";
   noActivitySecondsToSleep["minimum"] = 0;
   noActivitySecondsToSleep["maximum"] = 3600;
@@ -1646,7 +1647,7 @@ void ui_init(void)
 */
 void setup()
 {
-  // Start serial and let settle
+  // start serial and let settle
   Serial.begin(SERIAL_BAUD_RATE);
   delay(2000);
   Serial.println(F("[tp32] starting up..."));
@@ -1682,9 +1683,9 @@ void setup()
   ft6336u.begin();
   pinMode(39, INPUT);
 
-  // innitialize draw buffer
+  // initialise draw buffer
   lv_disp_draw_buf_init(&draw_buf, buf, NULL, screenWidth * 10);
-  // Initialize the display
+  // initialise the display
   static lv_disp_drv_t disp_drv;
   lv_disp_drv_init(&disp_drv);
   // settings for display driver
@@ -1694,7 +1695,7 @@ void setup()
   disp_drv.draw_buf = &draw_buf;
   lv_disp_drv_register(&disp_drv);
 
-  // Initialize the input device driver (touch panel)
+  // initialise the input device driver (touch panel)
   static lv_indev_drv_t indev_drv;
   lv_indev_drv_init(&indev_drv);
   indev_drv.type = LV_INDEV_TYPE_POINTER;
@@ -1722,10 +1723,10 @@ void setup()
   // start the screen to make sure everything is initialised
   ui_init();
 
-  // Start WT32 hardware
+  // start WT32 hardware
   wt32.begin(jsonConfig, jsonCommand);
 
-  // Set up config/command schema (for self-discovery and adoption)
+  // set up config/command schema (for self-discovery and adoption)
   setConfigSchema();
 
   // prepare info text
@@ -1733,8 +1734,6 @@ void setup()
 
   // show HomeScreen
   screenVault.show(SCREEN_HOME);
-
-  Serial.println(F("[tp32] Setup done"));
 }
 
 /**
