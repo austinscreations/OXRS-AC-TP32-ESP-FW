@@ -50,7 +50,10 @@ classScreen::classScreen(int number, int style)
   lv_obj_align(_labelFooter, LV_ALIGN_BOTTOM_MID, 0, -5);
   lv_obj_set_style_text_font(_labelFooter, &lv_font_montserrat_20, 0);
   lv_label_set_recolor(_labelFooter, true);
-  lv_label_set_text_fmt(_labelFooter, "Screen %d", screenIdx);
+
+  // default the screen label to something useful
+  sprintf(screenLabel, "Screen %d", screenIdx);
+  setFooter(screenLabel);
 
   _labelWarning = lv_label_create(screen);
   lv_obj_align(_labelWarning, LV_ALIGN_BOTTOM_RIGHT, -45, -5);
