@@ -9,16 +9,17 @@
 #include <OXRS_API.h>  // For REST API
 
 // Ethernet
-#define DHCP_TIMEOUT_MS 15000
-#define DHCP_RESPONSE_TIMEOUT_MS 4000
+#define DHCP_TIMEOUT_MS           15000
+#define DHCP_RESPONSE_TIMEOUT_MS  4000
 
 // REST API
-#define REST_API_PORT 80
+#define REST_API_PORT             80
 
 // Macro for converting env vars to strings
 #define STRINGIFY(s) STRINGIFY1(s)
 #define STRINGIFY1(s) #s
 
+// Enum for the different connection states
 enum connectionState_t { CONNECTED_NONE, CONNECTED_IP, CONNECTED_MQTT };
 
 class OXRS_WT32 : public Print
@@ -43,13 +44,11 @@ public:
   boolean publishStatus(JsonVariant json);
   boolean publishTelemetry(JsonVariant json);
 
+  // Helpers used to display the connection state on the settings page
+  connectionState_t getConnectionState(void);
   void getIPAddressTxt(char *buffer);
   void getMACAddressTxt(char *buffer);
   void getMQTTTopicTxt(char *buffer);
-
-  connectionState_t getConnectionState(void);
-
-  void restartApi(void);
 
   // Implement Print.h wrapper
   virtual size_t write(uint8_t);

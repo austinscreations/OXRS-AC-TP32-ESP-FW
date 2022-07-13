@@ -9,12 +9,12 @@
 #include <WiFi.h>         // Required for Ethernet to get MAC
 #include <MqttLogger.h>   // For logging
 
-#ifdef WIFI_MODE
+#if defined(WIFI_MODE)
 #include <WiFiManager.h>  // For WiFi AP config
 #endif
 
 // Network client (for MQTT)/server (for REST API)
-#ifndef WIFI_MODE
+#if defined(ETH_MODE)
 // Ethernet client
 EthernetClient _client;
 EthernetServer _server(REST_API_PORT);
@@ -67,9 +67,10 @@ void _getFirmwareJson(JsonVariant json)
   firmware["shortName"] = FW_SHORT_NAME;
   firmware["maker"] = FW_MAKER;
   firmware["version"] = STRINGIFY(FW_VERSION);
-  #if defined (FW_GITHUB_URL)
-      firmware["githubUrl"] = FW_GITHUB_URL;
-  #endif
+
+#if defined (FW_GITHUB_URL)
+  firmware["githubUrl"] = FW_GITHUB_URL;
+#endif
 }
 
 void _getSystemJson(JsonVariant json)
@@ -93,11 +94,11 @@ void _getSystemJson(JsonVariant json)
 
 void _getNetworkJson(JsonVariant json)
 {
-  byte mac[6];
-
   JsonObject network = json.createNestedObject("network");
 
-#ifndef WIFI_MODE
+  byte mac[6];
+
+#if defined(ETH_MODE)
   Ethernet.MACAddress(mac);
   
   network["mode"] = "ethernet";
@@ -148,11 +149,6 @@ void _getCommandSchemaJson(JsonVariant json)
   {
     _mergeJson(properties, _fwCommandSchema.as<JsonVariant>());
   }
-
-  // Rack32 commands
-  JsonObject restart = properties.createNestedObject("restart");
-  restart["title"] = "Restart";
-  restart["type"] = "boolean";
 }
 
 /* API callbacks */
@@ -179,7 +175,7 @@ void _mqttConnected()
   _mqtt.publishAdopt(_api.getAdopt(json.as<JsonVariant>()));
 
   // Log the fact we are now connected
-  _logger.println("[wpan] mqtt connected");
+  _logger.println("[wt32] mqtt connected");
 }
 
 void _mqttDisconnected(int state)
@@ -189,31 +185,31 @@ void _mqttDisconnected(int state)
   switch (state)
   {
   case MQTT_CONNECTION_TIMEOUT:
-    _logger.println(F("[wpan] mqtt connection timeout"));
+    _logger.println(F("[wt32] mqtt connection timeout"));
     break;
   case MQTT_CONNECTION_LOST:
-    _logger.println(F("[wpan] mqtt connection lost"));
+    _logger.println(F("[wt32] mqtt connection lost"));
     break;
   case MQTT_CONNECT_FAILED:
-    _logger.println(F("[wpan] mqtt connect failed"));
+    _logger.println(F("[wt32] mqtt connect failed"));
     break;
   case MQTT_DISCONNECTED:
-    _logger.println(F("[wpan] mqtt disconnected"));
+    _logger.println(F("[wt32] mqtt disconnected"));
     break;
   case MQTT_CONNECT_BAD_PROTOCOL:
-    _logger.println(F("[wpan] mqtt bad protocol"));
+    _logger.println(F("[wt32] mqtt bad protocol"));
     break;
   case MQTT_CONNECT_BAD_CLIENT_ID:
-    _logger.println(F("[wpan] mqtt bad client id"));
+    _logger.println(F("[wt32] mqtt bad client id"));
     break;
   case MQTT_CONNECT_UNAVAILABLE:
-    _logger.println(F("[wpan] mqtt unavailable"));
+    _logger.println(F("[wt32] mqtt unavailable"));
     break;
   case MQTT_CONNECT_BAD_CREDENTIALS:
-    _logger.println(F("[wpan] mqtt bad credentials"));
+    _logger.println(F("[wt32] mqtt bad credentials"));
     break;
   case MQTT_CONNECT_UNAUTHORIZED:
-    _logger.println(F("[wpan] mqtt unauthorised"));
+    _logger.println(F("[wt32] mqtt unauthorised"));
     break;
   }
 }
@@ -229,12 +225,6 @@ void _mqttConfig(JsonVariant json)
 
 void _mqttCommand(JsonVariant json)
 {
-  // Check for library commands
-  if (json.containsKey("restart") && json["restart"].as<bool>())
-  {
-    ESP.restart();
-  }
-
   // Pass on to the firmware callback
   if (_onCommand)
   {
@@ -249,16 +239,16 @@ void _mqttCallback(char *topic, byte *payload, int length)
   switch (state)
   {
   case MQTT_RECEIVE_ZERO_LENGTH:
-    _logger.println(F("[wpan] empty mqtt payload received"));
+    _logger.println(F("[wt32] empty mqtt payload received"));
     break;
   case MQTT_RECEIVE_JSON_ERROR:
-    _logger.println(F("[wpan] failed to deserialise mqtt json payload"));
+    _logger.println(F("[wt32] failed to deserialise mqtt json payload"));
     break;
   case MQTT_RECEIVE_NO_CONFIG_HANDLER:
-    _logger.println(F("[wpan] no mqtt config handler"));
+    _logger.println(F("[wt32] no mqtt config handler"));
     break;
   case MQTT_RECEIVE_NO_COMMAND_HANDLER:
-    _logger.println(F("[wpan] no mqtt command handler"));
+    _logger.println(F("[wt32] no mqtt command handler"));
     break;
   }
 }
@@ -296,11 +286,11 @@ void OXRS_WT32::begin(jsonCallback config, jsonCallback command)
   _getFirmwareJson(json.as<JsonVariant>());
 
   // Log firmware details
-  _logger.print(F("[wpan] "));
+  _logger.print(F("[wt32] "));
   serializeJson(json, _logger);
   _logger.println();
 
-  // We wrap the callbacks so we can intercept messages intended for the Rack32
+  // We wrap the callbacks so we can intercept messages intended for the WT32
   _onConfig = config;
   _onCommand = command;
 
@@ -321,7 +311,7 @@ void OXRS_WT32::loop(void)
   if (_isNetworkConnected())
   {
     // Maintain our DHCP lease
-#ifndef WIFI_MODE
+#if defined(ETH_MODE)
     Ethernet.maintain();
 #endif
 
@@ -329,7 +319,7 @@ void OXRS_WT32::loop(void)
     _mqtt.loop();
 
     // Handle any REST API requests
-#ifndef WIFI_MODE
+#if defined(ETH_MODE)
     EthernetClient client = _server.available();
     _api.loop(&client);
 #else
@@ -371,7 +361,7 @@ boolean OXRS_WT32::publishTelemetry(JsonVariant json)
 
 size_t OXRS_WT32::write(uint8_t character)
 {
-  // Pass to logger - allows firmware to use `rack32.println("Log this!")`
+  // Pass to logger - allows firmware to use `wt32.println("Log this!")`
   return _logger.write(character);
 }
 
@@ -380,7 +370,7 @@ void OXRS_WT32::_initialiseNetwork(byte * mac)
   // Get WiFi base MAC address
   WiFi.macAddress(mac);
 
-#ifndef WIFI_MODE
+#if defined(ETH_MODE)
   // Ethernet MAC address is base MAC + 3
   // See https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/system.html#mac-address
   mac[5] += 3;
@@ -390,22 +380,8 @@ void OXRS_WT32::_initialiseNetwork(byte * mac)
   char mac_display[18];
   sprintf_P(mac_display, PSTR("%02X:%02X:%02X:%02X:%02X:%02X"), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
-#ifdef WIFI_MODE
-  _logger.print(F("[wpan] wifi mac address: "));
-  _logger.println(mac_display);
-
-  // Ensure we are in the correct WiFi mode
-  WiFi.mode(WIFI_STA);
-
-  // Connect using saved creds, or start captive portal if none found
-  // NOTE: Blocks until connected or the portal is closed
-  WiFiManager wm;
-  bool success = wm.autoConnect("OXRS_WiFi", "superhouse");
-
-  _logger.print(F("[wpan] ip address: "));
-  _logger.println(success ? WiFi.localIP() : IPAddress(0, 0, 0, 0));
-#else
-  _logger.print(F("[wpan] ethernet mac address: "));
+#if defined(ETH_MODE)
+  _logger.print(F("[wt32] ethernet mac address: "));
   _logger.println(mac_display);
 
   // Initialise ethernet library
@@ -423,8 +399,22 @@ void OXRS_WT32::_initialiseNetwork(byte * mac)
   // Connect ethernet and get an IP address via DHCP
   bool success = Ethernet.begin(mac, DHCP_TIMEOUT_MS, DHCP_RESPONSE_TIMEOUT_MS);
   
-  _logger.print(F("[wpan] ip address: "));
+  _logger.print(F("[wt32] ip address: "));
   _logger.println(success ? Ethernet.localIP() : IPAddress(0, 0, 0, 0));
+#else
+  _logger.print(F("[wt32] wifi mac address: "));
+  _logger.println(mac_display);
+
+  // Ensure we are in the correct WiFi mode
+  WiFi.mode(WIFI_STA);
+
+  // Connect using saved creds, or start captive portal if none found
+  // NOTE: Blocks until connected or the portal is closed
+  WiFiManager wm;
+  bool success = wm.autoConnect("OXRS_WiFi", "superhouse");
+
+  _logger.print(F("[wt32] ip address: "));
+  _logger.println(success ? WiFi.localIP() : IPAddress(0, 0, 0, 0));
 #endif
 }
 
@@ -464,28 +454,32 @@ void OXRS_WT32::_initialiseRestApi(void)
   _server.begin();
 }
 
-void OXRS_WT32::restartApi(void)
-{
-  _api.begin();
-}
-
 boolean OXRS_WT32::_isNetworkConnected(void)
 {
-#ifndef WIFI_MODE
+#if defined(ETH_MODE)
   return Ethernet.linkStatus() == LinkON;
 #else
   return WiFi.status() == WL_CONNECTED;
 #endif
 }
 
-// getters for LVGL
+connectionState_t OXRS_WT32::getConnectionState(void)
+{
+  if (_isNetworkConnected())
+  {
+    return _mqtt.connected() ? CONNECTED_MQTT : CONNECTED_IP;
+  }
+
+  return CONNECTED_NONE;
+}
+
 void OXRS_WT32::getIPAddressTxt(char *buffer)
 {
   IPAddress ip = IPAddress(0, 0, 0, 0);
 
   if (_isNetworkConnected())
   {
-#ifndef WIFI_MODE
+#if defined(ETH_MODE)
     ip = Ethernet.localIP();
 #else
     ip = WiFi.localIP();
@@ -506,7 +500,7 @@ void OXRS_WT32::getMACAddressTxt(char *buffer)
 {
   byte mac[6];
 
-#ifndef WIFI_MODE
+#if defined(ETH_MODE)
   Ethernet.MACAddress(mac);
 #else
   WiFi.macAddress(mac);
@@ -529,15 +523,4 @@ void OXRS_WT32::getMQTTTopicTxt(char *buffer)
     strcpy(buffer, "");
     strncat(buffer, topic, 39);
   }
-}
-
-connectionState_t OXRS_WT32::getConnectionState(void)
-{
-  if (_mqtt.connected())
-    return CONNECTED_MQTT;
-    
-  if (_isNetworkConnected())
-    return CONNECTED_IP;
-
-  return CONNECTED_NONE;
 }
