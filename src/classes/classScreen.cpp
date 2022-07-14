@@ -49,15 +49,34 @@ classScreen::classScreen(int number, int style)
   _labelFooter = lv_label_create(screen);
   lv_obj_align(_labelFooter, LV_ALIGN_BOTTOM_MID, 0, -5);
   lv_obj_set_style_text_font(_labelFooter, &lv_font_montserrat_20, 0);
+  lv_label_set_text_fmt(_labelFooter, "Screen %d", screenIdx);
   lv_label_set_recolor(_labelFooter, true);
-
-  // default the screen label to something useful
-  sprintf(screenLabel, "Screen %d", screenIdx);
-  setFooter(screenLabel);
 
   _labelWarning = lv_label_create(screen);
   lv_obj_align(_labelWarning, LV_ALIGN_BOTTOM_RIGHT, -45, -5);
   lv_label_set_text(_labelWarning, "");
+
+  // placeholder for footer modifier
+  _labelLeft = lv_label_create(screen);
+  lv_obj_align(_labelLeft, LV_ALIGN_BOTTOM_LEFT, 10, -5);
+  lv_obj_set_style_text_font(_labelLeft, &lv_font_montserrat_20, 0);
+  lv_label_set_text(_labelLeft, "");
+  lv_label_set_recolor(_labelLeft, true);
+  lv_obj_add_flag(_labelLeft, LV_OBJ_FLAG_HIDDEN);
+
+  _labelCenter = lv_label_create(screen);
+  lv_obj_align(_labelCenter, LV_ALIGN_BOTTOM_MID, 0, -5);
+  lv_obj_set_style_text_font(_labelCenter, &lv_font_montserrat_20, 0);
+  lv_label_set_text(_labelCenter, "");
+  lv_label_set_recolor(_labelCenter, true);
+  lv_obj_add_flag(_labelCenter, LV_OBJ_FLAG_HIDDEN);
+
+  _labelRight = lv_label_create(screen);
+  lv_obj_align(_labelRight, LV_ALIGN_BOTTOM_RIGHT, -10, -5);
+  lv_obj_set_style_text_font(_labelRight, &lv_font_montserrat_20, 0);
+  lv_label_set_text(_labelRight, "");
+  lv_label_set_recolor(_labelRight, true);
+  lv_obj_add_flag(_labelRight, LV_OBJ_FLAG_HIDDEN);
 }
 
 int classScreen::getScreenNumber(void)
@@ -67,31 +86,55 @@ int classScreen::getScreenNumber(void)
 
 void classScreen::setLabel(const char *labelText)
 {
-  strcpy(screenLabel, labelText);
-  setFooter(screenLabel);
+  lv_label_set_text(_labelFooter, labelText);
 }
 
 const char *classScreen::getLabel(void)
 {
-  return screenLabel;
+  return lv_label_get_text(_labelFooter);
 }
 
-void classScreen::setFooter(const char *footerText)
+void classScreen::setFooter(const char *left, const char *center, const char *right)
 {
-  // if the footer has been cleared, then display the screen label (default)
-  if (strlen(footerText) == 0)
+  if (!left || (strlen(left) == 0))
   {
-    lv_label_set_text(_labelFooter, screenLabel);
+    lv_obj_add_flag(_labelLeft, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_clear_flag(_btnHome, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_clear_flag(_btnHomeImg, LV_OBJ_FLAG_HIDDEN);
   }
   else
   {
-    lv_label_set_text(_labelFooter, footerText);
+    lv_label_set_text(_labelLeft, left);
+    lv_obj_clear_flag(_labelLeft, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(_btnHome, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(_btnHomeImg, LV_OBJ_FLAG_HIDDEN);
   }
-}
 
-const char *classScreen::getFooter(void)
-{
-  return lv_label_get_text(_labelFooter);
+  if (!center || (strlen(center) == 0))
+  {
+    lv_obj_add_flag(_labelCenter, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_clear_flag(_labelFooter, LV_OBJ_FLAG_HIDDEN);
+  }
+  else
+  {
+    lv_label_set_text(_labelCenter, center);
+    lv_obj_clear_flag(_labelCenter, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(_labelFooter, LV_OBJ_FLAG_HIDDEN);
+  }
+
+  if (!right || (strlen(right) == 0))
+  {
+    lv_obj_add_flag(_labelRight, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_clear_flag(_btnSettings, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_clear_flag(_btnSettingsImg, LV_OBJ_FLAG_HIDDEN);
+  }
+  else
+  {
+    lv_label_set_text(_labelRight, right);
+    lv_obj_clear_flag(_labelRight, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(_btnSettings, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(_btnSettingsImg, LV_OBJ_FLAG_HIDDEN);
+  }
 }
 
 void classScreen::updateBgColor(void)

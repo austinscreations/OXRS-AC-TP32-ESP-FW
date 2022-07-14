@@ -12,10 +12,12 @@ private:
   lv_obj_t *_btnSettings = NULL;
   lv_obj_t *_btnSettingsImg = NULL;
   lv_obj_t *_btnFooter = NULL;
+  lv_obj_t *_labelLeft = NULL;
+  lv_obj_t *_labelCenter = NULL;
+  lv_obj_t *_labelRight = NULL;
 
 public:
   int screenIdx;
-  char screenLabel[32];
 
   lv_obj_t *screen = NULL;
   lv_obj_t *container = NULL;
@@ -25,8 +27,7 @@ public:
   
   void setLabel(const char *labelText);
   const char *getLabel(void);
-  void setFooter(const char *footerText);
-  const char *getFooter(void);
+  void setFooter(const char *left, const char *center, const char *right);
 
   void updateBgColor(void);
   void createHomeButton(lv_event_cb_t callBack, const void *img);
