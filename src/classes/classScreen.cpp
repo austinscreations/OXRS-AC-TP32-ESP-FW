@@ -96,7 +96,7 @@ const char *classScreen::getLabel(void)
 
 void classScreen::setFooter(const char *left, const char *center, const char *right)
 {
-  if (!left || (strlen(left) == 0))
+  if (!left)
   {
     lv_obj_add_flag(_labelLeft, LV_OBJ_FLAG_HIDDEN);
     lv_obj_clear_flag(_btnHome, LV_OBJ_FLAG_HIDDEN);
@@ -110,7 +110,7 @@ void classScreen::setFooter(const char *left, const char *center, const char *ri
     lv_obj_add_flag(_btnHomeImg, LV_OBJ_FLAG_HIDDEN);
   }
 
-  if (!center || (strlen(center) == 0))
+  if (!center)
   {
     lv_obj_add_flag(_labelCenter, LV_OBJ_FLAG_HIDDEN);
     lv_obj_clear_flag(_labelFooter, LV_OBJ_FLAG_HIDDEN);
@@ -122,7 +122,7 @@ void classScreen::setFooter(const char *left, const char *center, const char *ri
     lv_obj_add_flag(_labelFooter, LV_OBJ_FLAG_HIDDEN);
   }
 
-  if (!right || (strlen(right) == 0))
+  if (!right)
   {
     lv_obj_add_flag(_labelRight, LV_OBJ_FLAG_HIDDEN);
     lv_obj_clear_flag(_btnSettings, LV_OBJ_FLAG_HIDDEN);

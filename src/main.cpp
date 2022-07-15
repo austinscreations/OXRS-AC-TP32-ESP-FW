@@ -1372,7 +1372,7 @@ void jsonScreenCommand(JsonVariant json)
 
   if (json.containsKey("footer"))
   {
-    screen->setFooter(json["footer"][0], json["footer"][1], json["footer"][2]);
+    screen->setFooter(json["footer"]["left"], json["footer"]["center"], json["footer"]["right"]);
   }
 }
 
