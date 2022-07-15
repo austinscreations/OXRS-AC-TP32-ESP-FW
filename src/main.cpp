@@ -853,6 +853,12 @@ static void footerButtonEventHandler(lv_event_t * e)
       dropDownOverlay.open();
     }
   }
+  if (event == LV_EVENT_LONG_PRESSED)
+  {
+    // long press of footer center loads hom screen
+    if (lv_obj_has_flag(ta, LV_OBJ_FLAG_USER_2))
+      screenVault.show(SCREEN_HOME);
+  }
 }
 
 // BackLight slider event handler
@@ -1366,7 +1372,7 @@ void jsonScreenCommand(JsonVariant json)
 
   if (json.containsKey("footer"))
   {
-    screen->setFooter(json["footer"]);
+    screen->setFooter(json["footer"]["left"], json["footer"]["center"], json["footer"]["right"]);
   }
 }
 
