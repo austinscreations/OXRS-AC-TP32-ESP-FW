@@ -40,6 +40,7 @@
 #include <classRemote.h>
 #include <classKeyPad.h>
 #include <classIconList.h>
+#include <classColorPicker.h>
 #include <base64.hpp>
 #include <TFT_eSPI.h>
 #include <lvgl.h>
@@ -163,6 +164,12 @@ classRemote remoteControl = classRemote();
 // key pad overlay
 classKeyPad keyPad = classKeyPad();
 
+// color picker overlay
+classColorPicker colorPicker = classColorPicker();
+
+// variables for snapshot feature
+lv_img_dsc_t *snapshot = NULL;
+
 /*--------------------------- screen / lvgl relevant  -----------------------------*/
 
 // Change to your screen resolution
@@ -226,6 +233,33 @@ void initStyleLut(void)
   styleLut[TS_KEYPAD_BLOCKING] = {TS_KEYPAD_BLOCKING, "keyPadBlocking", NULL};
   styleLut[TS_REMOTE] = {TS_REMOTE, "remote", imgRemote};
   styleLut[TS_LINK] = {TS_LINK, "link", NULL};
+}
+
+void makeSnapShot(uint8_t **bufferPtr, size_t *bufferSize)
+{
+  uint8_t *snapShotBufferPtr = NULL;
+  size_t snapShotBufferSize = 0;
+
+  if (snapshot)
+    lv_snapshot_free(snapshot);
+  snapshot = lv_snapshot_take(lv_scr_act(), LV_IMG_CF_TRUE_COLOR_ALPHA);
+
+  snapShotBufferPtr = (uint8_t *)snapshot->data;
+  snapShotBufferSize = SCREEN_WIDTH * SCREEN_HEIGHT * 3;
+
+  // convert to RGB888
+  lv_color_t color;
+  for (int i = 0; i < snapShotBufferSize; i += 3)
+  {
+    color.full = snapShotBufferPtr[i] + snapShotBufferPtr[i + 1] * 0x100;
+    snapShotBufferPtr[i] = (color.ch.red * 255) / 31;
+    snapShotBufferPtr[i + 1] = (color.ch.green * 255) / 63;
+    snapShotBufferPtr[i + 2] = (color.ch.blue * 255) / 31;
+  }
+
+  // return the buffer
+  *bufferPtr = snapShotBufferPtr;
+  *bufferSize = snapShotBufferSize;
 }
 
 // converts a style string to its enum
@@ -779,6 +813,14 @@ static void screenDropDownEventHandler(lv_event_t * e)
   }
 }
 
+// color picker event handler
+static void colorPickerEventHandler(lv_event_t *e)
+{
+  lv_event_code_t code = lv_event_get_code(e);
+  if ((code == LV_EVENT_VALUE_CHANGED) || (code == LV_EVENT_PRESS_LOST))
+    colorPicker.updateRGB();
+}
+
 // general Tile Event Handler
 static void tileEventHandler(lv_event_t * e)
 {
@@ -812,6 +854,12 @@ static void tileEventHandler(lv_event_t * e)
       else if (tPtr->getKeyPadEnable())
       {
         keyPad = classKeyPad(tPtr, keyPadEventHandler);
+      }
+      // button is style COLOR_PICKER -> show color picker overlay
+      else if (tPtr->getStyle() == TS_COLOR_PICKER)
+      {
+        colorPicker = classColorPicker(tPtr, colorPickerEventHandler);
+        colorPicker.updateRGB();
       }
 
       //  publish click event
@@ -1025,7 +1073,7 @@ void createTile(const char *styleStr, int screenIdx, int tileIdx, const char *ic
   }
 
   // set indicator for modal screen
-  if ((style == TS_DROPDOWN) || (style == TS_REMOTE) || (style == TS_KEYPAD) || (style == TS_KEYPAD_BLOCKING))
+  if ((style == TS_DROPDOWN) || (style == TS_REMOTE) || (style == TS_KEYPAD) || (style == TS_KEYPAD_BLOCKING) || (style == TS_COLOR_PICKER))
   {
     ref.setDropDownIndicator();
   }
