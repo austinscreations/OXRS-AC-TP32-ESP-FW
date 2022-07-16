@@ -219,20 +219,20 @@ void initIconVault(void)
 // initialise the tile_style_LUT
 void initStyleLut(void)
 {
-  styleLut[TS_NONE] = {TS_NONE, "", NULL};
-  styleLut[TS_BUTTON] = {TS_BUTTON, "button", NULL};
-  styleLut[TS_BUTTON_LEVEL_UP] = {TS_BUTTON_LEVEL_UP, "buttonLevelUp", NULL};
-  styleLut[TS_BUTTON_LEVEL_DOWN] = {TS_BUTTON_LEVEL_DOWN, "buttonLevelDown", NULL};
-  styleLut[TS_BUTTON_UP_DOWN] = {TS_BUTTON_UP_DOWN, "buttonUpDown", NULL};
-  styleLut[TS_BUTTON_LEFT_RIGHT] = {TS_BUTTON_LEFT_RIGHT, "buttonLeftRight", NULL};
-  styleLut[TS_BUTTON_PREV_NEXT] = {TS_BUTTON_PREV_NEXT, "buttonPrevNext", NULL};
-  styleLut[TS_INDICATOR] = {TS_INDICATOR, "indicator", NULL};
-  styleLut[TS_COLOR_PICKER] = {TS_COLOR_PICKER, "colorPicker", NULL};
-  styleLut[TS_DROPDOWN] = {TS_DROPDOWN, "dropDown", NULL};
-  styleLut[TS_KEYPAD] = {TS_KEYPAD, "keyPad", NULL};
-  styleLut[TS_KEYPAD_BLOCKING] = {TS_KEYPAD_BLOCKING, "keyPadBlocking", NULL};
-  styleLut[TS_REMOTE] = {TS_REMOTE, "remote", imgRemote};
-  styleLut[TS_LINK] = {TS_LINK, "link", NULL};
+  styleLut[TS_NONE] = {TS_NONE, ""};
+  styleLut[TS_BUTTON] = {TS_BUTTON, "button"};
+  styleLut[TS_BUTTON_LEVEL_UP] = {TS_BUTTON_LEVEL_UP, "buttonLevelUp"};
+  styleLut[TS_BUTTON_LEVEL_DOWN] = {TS_BUTTON_LEVEL_DOWN, "buttonLevelDown"};
+  styleLut[TS_BUTTON_UP_DOWN] = {TS_BUTTON_UP_DOWN, "buttonUpDown"};
+  styleLut[TS_BUTTON_LEFT_RIGHT] = {TS_BUTTON_LEFT_RIGHT, "buttonLeftRight"};
+  styleLut[TS_BUTTON_PREV_NEXT] = {TS_BUTTON_PREV_NEXT, "buttonPrevNext"};
+  styleLut[TS_INDICATOR] = {TS_INDICATOR, "indicator"};
+  styleLut[TS_COLOR_PICKER] = {TS_COLOR_PICKER, "colorPicker"};
+  styleLut[TS_DROPDOWN] = {TS_DROPDOWN, "dropDown"};
+  styleLut[TS_KEYPAD] = {TS_KEYPAD, "keyPad"};
+  styleLut[TS_KEYPAD_BLOCKING] = {TS_KEYPAD_BLOCKING, "keyPadBlocking"};
+  styleLut[TS_REMOTE] = {TS_REMOTE, "remote"};
+  styleLut[TS_LINK] = {TS_LINK, "link"};
 }
 
 void makeSnapShot(uint8_t **bufferPtr, size_t *bufferSize)
@@ -996,8 +996,6 @@ void createTile(const char *styleStr, int screenIdx, int tileIdx, const char *ic
   // get the icon image
   if (iconStr)
     img = iconVault.getIcon(string(iconStr));
-  if (!img)
-    img = styleLut[style].imgDefault;
 
   // create new Tile
   classTile &ref = tileVault.add();
@@ -1574,6 +1572,8 @@ void jsonAddIcon(JsonVariant json)
   // TODO :
   //    check if ps_alloc successful
 
+  if (!json["name"] || !json["image"]) return;
+  
   // check if named icon exist, if yes -> get descriptor
   lv_img_dsc_t *oldIcon = (lv_img_dsc_t *)iconVault.getIcon(json["name"]);
 
