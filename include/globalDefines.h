@@ -27,7 +27,6 @@ typedef struct
 {
   int style;
   const char *styleStr;
-  const void *imgDefault;
 } styleLutEntry_t;
 
 typedef struct
