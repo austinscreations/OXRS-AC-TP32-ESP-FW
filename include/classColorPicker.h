@@ -14,9 +14,18 @@ private:
   lv_obj_t *_labelRed = NULL;
   lv_obj_t *_labelGreen = NULL;
   lv_obj_t *_labelBlue = NULL;
-  lv_obj_t *_labelMode = NULL;
+  lv_obj_t *_labelColorTemp = NULL;
+  lv_obj_t *_labelBrightness = NULL;
+  lv_obj_t *_barCTlow = NULL;
+  lv_obj_t *_barCThigh = NULL;
+  lv_obj_t *_sliderCT = NULL;
+  lv_obj_t *_barBrightness = NULL;
+  lv_obj_t *_sliderBrightness = NULL;
+  lv_obj_t *_barLuminanz = NULL;
+  lv_obj_t *_sliderLuminanz = NULL;
 
   void _createColorPicker(void);
+  static void _exitButtonEventHandler(lv_event_t *e);
 
 public:
   lv_obj_t* ovlPanel = NULL;
@@ -27,5 +36,4 @@ public:
   void updateRGB(void);
   void setRGB(int red, int green, int blue);
 
-  static void closeEvt(lv_event_t *e);
 };
