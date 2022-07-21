@@ -124,13 +124,17 @@ const void *imgRight = &ios_right_30;
 int _actBackLight;
 int _retainedBackLight;
 
-connectionState_t _connectionState = CONNECTED_NONE;
-uint32_t _noActivityTimeOutToHome = 0L;
-uint32_t _noActivityTimeOutToSleep = 0L;
+connectionState_t _connectionState    = CONNECTED_NONE;
+uint32_t _noActivityTimeOutToHome     = 0L;
+uint32_t _noActivityTimeOutToSleep    = 0L;
 
-#define DEFAULT_COLOR_ON_RED   91
-#define DEFAULT_COLOR_ON_GREEN 190
-#define DEFAULT_COLOR_ON_BLUE  91
+#define DEFAULT_COLOR_ICON_ON_RED       91
+#define DEFAULT_COLOR_ICON_ON_GREEN     190
+#define DEFAULT_COLOR_ICON_ON_BLUE      91
+
+#define DEFAULT_COLOR_BACKGROUND_RED    0
+#define DEFAULT_COLOR_BACKGROUND_GREEN  0
+#define DEFAULT_COLOR_BACKGROUND_BLUE   0
 
 lv_color_t colorOn;
 lv_color_t colorBg;
@@ -518,12 +522,15 @@ void checkNoActivity(void)
   * ui helper functions
   */
 
-void defaultOnColorConfig(int red, int green, int blue)
+void setIconOnColor(int red, int green, int blue)
 {
   // all zero is defined as unset, so set default
   if ((red + green + blue) == 0)
   {
-    colorOn = lv_color_make(DEFAULT_COLOR_ON_RED, DEFAULT_COLOR_ON_GREEN, DEFAULT_COLOR_ON_BLUE);
+    colorOn = lv_color_make(
+      DEFAULT_COLOR_ICON_ON_RED, 
+      DEFAULT_COLOR_ICON_ON_GREEN, 
+      DEFAULT_COLOR_ICON_ON_BLUE);
   }
   else
   {
@@ -531,12 +538,15 @@ void defaultOnColorConfig(int red, int green, int blue)
   }
 }
 
-void defaultThemeColorConfig(int red, int green, int blue)
+void setBackgroundColor(int red, int green, int blue)
 {
   // all zero is defined as unset, so set default
   if ((red + green + blue) == 0)
   {
-    colorBg = lv_color_make(0, 0, 0);
+    colorBg = lv_color_make(
+      DEFAULT_COLOR_BACKGROUND_RED,
+      DEFAULT_COLOR_BACKGROUND_GREEN,
+      DEFAULT_COLOR_BACKGROUND_BLUE);
   }
   else
   {
@@ -922,6 +932,30 @@ void createInputStyleEnum(JsonObject parent)
   }
 }
 
+// red/green/blue properties for config
+void createRgbProperties(JsonVariant json)
+{
+  JsonObject properties = json.createNestedObject("properties");
+
+  JsonObject red = properties.createNestedObject("red");
+  red["title"] = "Red";
+  red["type"] = "integer";
+  red["minimum"] = 0;
+  red["maximum"] = 255;
+
+  JsonObject green = properties.createNestedObject("green");
+  green["title"] = "Green";
+  green["type"] = "integer";
+  green["minimum"] = 0;
+  green["maximum"] = 255;
+
+  JsonObject blue = properties.createNestedObject("blue");
+  blue["title"] = "Blue";
+  blue["type"] = "integer";
+  blue["minimum"] = 0;
+  blue["maximum"] = 255;
+}
+
 // Create any tile on any screen
 void createTile(const char *styleStr, int screenIdx, int tileIdx, const char *iconStr, const char *label, int linkedScreen, int levelStart, int levelStop)
 {
@@ -1033,7 +1067,7 @@ void createTile(const char *styleStr, int screenIdx, int tileIdx, const char *ic
  * Config Handler
  */
 
-void jsonOnColorConfig(JsonVariant json)
+void jsonColorIconOnConfig(JsonVariant json)
 {
   uint8_t red, green, blue;
 
@@ -1041,10 +1075,10 @@ void jsonOnColorConfig(JsonVariant json)
   green = (uint8_t)json["green"].as<int>();
   blue = (uint8_t)json["blue"].as<int>();
 
-  defaultOnColorConfig(red, green, blue);
+  setIconOnColor(red, green, blue);
 }
 
-void jsonThemeColorConfig(JsonVariant json)
+void jsonColorBackgroundConfig(JsonVariant json)
 {
   uint8_t red, green, blue;
 
@@ -1052,8 +1086,8 @@ void jsonThemeColorConfig(JsonVariant json)
   green = (uint8_t)json["green"].as<int>();
   blue = (uint8_t)json["blue"].as<int>();
 
-  // update all instances
-  defaultThemeColorConfig(red, green, blue);
+  // update all screens
+  setBackgroundColor(red, green, blue);
   classScreen *sPtr = screenVault.getStart();
   do
   {
@@ -1083,14 +1117,14 @@ void jsonTilesConfig(int screenIdx, JsonVariant json)
 
 void jsonConfig(JsonVariant json)
 {
-  if (json.containsKey("color"))
+  if (json.containsKey("colorIconOn"))
   {
-    jsonOnColorConfig(json["color"]);
+    jsonColorIconOnConfig(json["colorIconOn"]);
   }
 
-  if (json.containsKey("colortheme"))
+  if (json.containsKey("colorBackground"))
   {
-    jsonThemeColorConfig(json["colortheme"]);
+    jsonColorBackgroundConfig(json["colorBackground"]);
   }
 
   if (json.containsKey("noActivitySecondsToHome"))
@@ -1126,121 +1160,83 @@ void screenConfigSchema(JsonVariant json)
   screens["description"] = "Add one or more screens to your panel. Screen 1 is the home screen and is mandatory. Index must be between 1-8.";
   screens["type"] = "array";
 
-  JsonObject items2 = screens.createNestedObject("items");
-  items2["type"] = "object";
+  JsonObject screensItems = screens.createNestedObject("items");
+  screensItems["type"] = "object";
 
-  JsonObject properties2 = items2.createNestedObject("properties");
+  JsonObject screensProperties = screensItems.createNestedObject("properties");
 
-  JsonObject screen = properties2.createNestedObject("screen");
+  JsonObject screen = screensProperties.createNestedObject("screen");
   screen["title"] = "Index";
   screen["type"] = "integer";
   screen["minimum"] = SCREEN_START;
   screen["maximum"] = SCREEN_END;
 
-  JsonObject label2 = properties2.createNestedObject("label");
-  label2["title"] = "Label";
-  label2["type"] = "string";
+  JsonObject screenLabel = screensProperties.createNestedObject("label");
+  screenLabel["title"] = "Label";
+  screenLabel["type"] = "string";
 
-  JsonArray required2 = items2.createNestedArray("required");
-  required2.add("screen");
-  required2.add("label");
+  JsonArray screensRequired = screensItems.createNestedArray("required");
+  screensRequired.add("screen");
+  screensRequired.add("label");
 
   // tiles on screen
-  JsonObject tiles = properties2.createNestedObject("tiles");
+  JsonObject tiles = screensProperties.createNestedObject("tiles");
   tiles["title"] = "Tiles";
   tiles["description"] = "Add one or more tiles to your screen. Index must be between 1-6. 'Linked Screen Index' required for 'link' tiles. 'Level Start/Stop' optional for 'buttonLevelXxx' tiles (defaults to 0/100).";
   tiles["type"] = "array";
 
-  JsonObject items3 = tiles.createNestedObject("items");
-  items3["type"] = "object";
+  JsonObject tilesItems = tiles.createNestedObject("items");
+  tilesItems["type"] = "object";
 
-  JsonObject properties3 = items3.createNestedObject("properties");
+  JsonObject tilesProperties = tilesItems.createNestedObject("properties");
 
-  JsonObject tile3 = properties3.createNestedObject("tile");
-  tile3["title"] = "Index";
-  tile3["type"] = "integer";
-  tile3["minimum"] = TILE_START;
-  tile3["maximum"] = TILE_END;
+  JsonObject tile = tilesProperties.createNestedObject("tile");
+  tile["title"] = "Index";
+  tile["type"] = "integer";
+  tile["minimum"] = TILE_START;
+  tile["maximum"] = TILE_END;
 
-  JsonObject type3 = properties3.createNestedObject("style");
-  type3["title"] = "Style";
-  createInputStyleEnum(type3);
+  JsonObject style = tilesProperties.createNestedObject("style");
+  style["title"] = "Style";
+  createInputStyleEnum(style);
 
-  JsonObject icon = properties3.createNestedObject("icon");
+  JsonObject icon = tilesProperties.createNestedObject("icon");
   icon["title"] = "Icon";
   createIconEnum(icon);
 
-  JsonObject label3 = properties3.createNestedObject("label");
-  label3["title"] = "Label";
-  label3["type"] = "string";
+  JsonObject tileLabel = tilesProperties.createNestedObject("label");
+  tileLabel["title"] = "Label";
+  tileLabel["type"] = "string";
 
-  JsonObject link = properties3.createNestedObject("link");
+  JsonObject link = tilesProperties.createNestedObject("link");
   link["title"] = "Linked Screen Index";
   link["type"] = "integer";
   link["minimum"] = SCREEN_START;
   link["maximum"] = SCREEN_END;
 
-  JsonObject levelStart = properties3.createNestedObject("levelStart");
+  JsonObject levelStart = tilesProperties.createNestedObject("levelStart");
   levelStart["title"] = "Level Start";
   levelStart["type"] = "integer";
 
-  JsonObject levelStop = properties3.createNestedObject("levelStop");
+  JsonObject levelStop = tilesProperties.createNestedObject("levelStop");
   levelStop["title"] = "Level Stop";
   levelStop["type"] = "integer";
 
-  JsonArray required3 = items3.createNestedArray("required");
-  required3.add("tile");
-  required3.add("style");
+  JsonArray tilesRequired = tilesItems.createNestedArray("required");
+  tilesRequired.add("tile");
+  tilesRequired.add("style");
 
-  // default Theme color
-  JsonObject colortheme = json.createNestedObject("colortheme");
-  colortheme["title"] = "Theme Color";
-  colortheme["description"] = "RGB value for tile background when 'off' (defaults to [0, 0, 0]).";
+  // background color
+  JsonObject colorBackground = json.createNestedObject("colorBackground");
+  colorBackground["title"] = "Background Color";
+  colorBackground["description"] = "RGB color of screen background (defaults to black - R0, G0, B0).";
+  createRgbProperties(colorBackground);
 
-  JsonObject properties5 = colortheme.createNestedObject("properties");
-
-  JsonObject red5 = properties5.createNestedObject("red");
-  red5["title"] = "Red";
-  red5["type"] = "integer";
-  red5["minimum"] = 0;
-  red5["maximum"] = 255;
-
-  JsonObject green5 = properties5.createNestedObject("green");
-  green5["title"] = "Green";
-  green5["type"] = "integer";
-  green5["minimum"] = 0;
-  green5["maximum"] = 255;
-
-  JsonObject blue5 = properties5.createNestedObject("blue");
-  blue5["title"] = "Blue";
-  blue5["type"] = "integer";
-  blue5["minimum"] = 0;
-  blue5["maximum"] = 255;
-
-  // default ON color
-  JsonObject color = json.createNestedObject("color");
-  color["title"] = "Icon 'ON' Color";
-  color["description"] = "RGB value for icon foreground when 'on' (defaults to [91, 190, 91]).";
-
-  JsonObject properties4 = color.createNestedObject("properties");
-
-  JsonObject red = properties4.createNestedObject("red");
-  red["title"] = "Red";
-  red["type"] = "integer";
-  red["minimum"] = 0;
-  red["maximum"] = 255;
-
-  JsonObject green = properties4.createNestedObject("green");
-  green["title"] = "Green";
-  green["type"] = "integer";
-  green["minimum"] = 0;
-  green["maximum"] = 255;
-
-  JsonObject blue = properties4.createNestedObject("blue");
-  blue["title"] = "Blue";
-  blue["type"] = "integer";
-  blue["minimum"] = 0;
-  blue["maximum"] = 255;
+  // icon 'ON' color
+  JsonObject colorIconOn = json.createNestedObject("colorIconOn");
+  colorIconOn["title"] = "Icon Color";
+  colorIconOn["description"] = "RGB color of icon when 'on' (defaults to light green - R91, G190, B91).";
+  createRgbProperties(colorIconOn);
 
   // noActivity timeout
   JsonObject noActivitySecondsToHome = json.createNestedObject("noActivitySecondsToHome");
@@ -1706,8 +1702,8 @@ void setup()
   indev_drv.gesture_limit = 40;
 
   // set colors to default, may be updated later from config handler
-  defaultOnColorConfig(0, 0, 0);
-  defaultThemeColorConfig(0, 0, 0);
+  setIconOnColor(0, 0, 0);
+  setBackgroundColor(0, 0, 0);
 
   // show splash screen
   _setBackLightLED(20);
