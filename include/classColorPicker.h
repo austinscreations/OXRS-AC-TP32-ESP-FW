@@ -21,8 +21,6 @@ private:
   lv_obj_t *_sliderCT = NULL;
   lv_obj_t *_barBrightness = NULL;
   lv_obj_t *_sliderBrightness = NULL;
-  lv_obj_t *_barLuminanz = NULL;
-  lv_obj_t *_sliderLuminanz = NULL;
 
   void _createColorPicker(void);
   static void _exitButtonEventHandler(lv_event_t *e);
@@ -33,7 +31,7 @@ public:
   classColorPicker(void){};
   classColorPicker(classTile* tile, lv_event_cb_t colorPickerEventHandler);
   classTile* getTile(void);
-  void updateRGB(void);
+  void updateAll(void);
   void setRGB(int red, int green, int blue);
 
 };

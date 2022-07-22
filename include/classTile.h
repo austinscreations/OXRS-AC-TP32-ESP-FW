@@ -42,6 +42,9 @@ protected:
   uint16_t _dropDownIndex = 0;
   int _selectorIndex = 0;
   string _selectorList = "";
+  lv_color_t _colorPickerRGB = lv_color_make(255, 0, 0);
+  int _colorPickerCCT = 4000;
+  int _colorPickerBrightness = 50;
 
   void _button(lv_obj_t *parent, const void *img);
   void _reColorAll(lv_color_t color, lv_style_selector_t selector);
@@ -109,4 +112,12 @@ public :
   void setSelectorIndex(int index);
   int getSelectorIndex(void);
   bool getSelectorValid(void);
+
+  void setColorPickerRGB(int red, int green, int blue);
+  void setColorPickerRGB(lv_color_t rgb);
+  void setColorPickerCCT(int colorTemp);
+  void setColorPickerBrightness(int Brightness);
+  lv_color_t getColorPickerRGB(void);
+  int getColorPickerCCT(void);
+  int getColorPickerBrightness(void);
 };

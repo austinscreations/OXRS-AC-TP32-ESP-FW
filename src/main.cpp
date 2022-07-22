@@ -376,6 +376,27 @@ void publishLevelEvent(classTile *tPtr, const char *event, int value)
   wt32.publishStatus(json.as<JsonVariant>());
 }
 
+// publish color picker change Event
+// {"screen":<number>, "tile":<number>, "style":"<style>", "type":"colorPicker", “event”:“change”, 
+// “state”:{"colorRGB":{"red":<val>, "green":<val>, "blue":<val>}, "colorTemperatur":<val>, "brightness":<val>}}
+
+void publishColorPickerEvent(classTile *tPtr, const char *event, lv_color32_t rgb, int cct, int brightness)
+{
+  StaticJsonDocument<256> json;
+  json["screen"] = tPtr->getScreenIdx();
+  json["tile"] = tPtr->getTileIdx();
+  json["style"] = tPtr->getStyleStr();
+  json["type"] = "colorPicker";
+  json["event"] = "change";
+  json["state"]["colorRGB"]["red"]= rgb.ch.red;
+  json["state"]["colorRGB"]["green"] = rgb.ch.green;
+  json["state"]["colorRGB"]["blue"] = rgb.ch.blue;
+  json["state"]["colorTemperature"] = cct;
+  json["state"]["brightness"] = brightness;
+
+  wt32.publishStatus(json.as<JsonVariant>());
+}
+
 // publish prev / next Event
 // {"screen":1, "tile":1, "type":"prev"|"next", "event":"single"|"hold" }
 void publishPrevNextEvent(classTile *tPtr, const char *type, const char *event)
@@ -818,7 +839,14 @@ static void colorPickerEventHandler(lv_event_t *e)
 {
   lv_event_code_t code = lv_event_get_code(e);
   if ((code == LV_EVENT_VALUE_CHANGED) || (code == LV_EVENT_PRESS_LOST))
-    colorPicker.updateRGB();
+  {
+    classTile *tPtr = (classTile *)lv_event_get_user_data(e);
+    colorPicker.updateAll();
+    lv_color32_t color32;
+    color32.full = lv_color_to32(tPtr->getColorPickerRGB());
+
+    publishColorPickerEvent(tPtr, "change", color32, tPtr->getColorPickerCCT(), tPtr->getColorPickerBrightness());
+  }
 }
 
 // general Tile Event Handler
@@ -855,13 +883,6 @@ static void tileEventHandler(lv_event_t * e)
       {
         keyPad = classKeyPad(tPtr, keyPadEventHandler);
       }
-      // button is style COLOR_PICKER -> show color picker overlay
-      else if (tPtr->getStyle() == TS_COLOR_PICKER)
-      {
-        colorPicker = classColorPicker(tPtr, colorPickerEventHandler);
-        colorPicker.updateRGB();
-      }
-
       //  publish click event
       else
       {
@@ -871,7 +892,17 @@ static void tileEventHandler(lv_event_t * e)
     // long press detected
     else
     {
-      publishTileEvent(tPtr, "hold");
+      // button is style COLOR_PICKER -> show color picker overlay
+      if (tPtr->getStyle() == TS_COLOR_PICKER)
+      {
+        colorPicker = classColorPicker(tPtr, colorPickerEventHandler);
+        colorPicker.updateAll();
+      }
+      // publish long press
+      else
+      {
+        publishTileEvent(tPtr, "hold");
+      }
     }
   }
 }
@@ -1538,6 +1569,13 @@ void jsonTileCommand(JsonVariant json)
   if (json.containsKey("selectorSelect"))
   {
     tile->setSelectorIndex(json["selectorSelect"].as<uint>());
+  }
+
+  if (json.containsKey("colorPicker"))
+  {
+    tile->setColorPickerRGB(json["colorPicker"]["colorRGB"]["red"], json["colorPicker"]["colorRGB"]["green"], json["colorPicker"]["colorRGB"]["blue"]);
+    tile->setColorPickerCCT(json["colorPicker"]["colorTemperature"]);
+    tile->setColorPickerBrightness(json["colorPicker"]["brightness"]);
   }
 }
 
