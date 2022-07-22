@@ -171,9 +171,6 @@ classKeyPad keyPad = classKeyPad();
 // color picker overlay
 classColorPicker colorPicker = classColorPicker();
 
-// variables for snapshot feature
-lv_img_dsc_t *snapshot = NULL;
-
 /*--------------------------- screen / lvgl relevant  -----------------------------*/
 
 // Change to your screen resolution
@@ -237,33 +234,6 @@ void initStyleLut(void)
   styleLut[TS_KEYPAD_BLOCKING] = {TS_KEYPAD_BLOCKING, "keyPadBlocking"};
   styleLut[TS_REMOTE] = {TS_REMOTE, "remote"};
   styleLut[TS_LINK] = {TS_LINK, "link"};
-}
-
-void makeSnapShot(uint8_t **bufferPtr, size_t *bufferSize)
-{
-  uint8_t *snapShotBufferPtr = NULL;
-  size_t snapShotBufferSize = 0;
-
-  if (snapshot)
-    lv_snapshot_free(snapshot);
-  snapshot = lv_snapshot_take(lv_scr_act(), LV_IMG_CF_TRUE_COLOR_ALPHA);
-
-  snapShotBufferPtr = (uint8_t *)snapshot->data;
-  snapShotBufferSize = SCREEN_WIDTH * SCREEN_HEIGHT * 3;
-
-  // convert to RGB888
-  lv_color_t color;
-  for (int i = 0; i < snapShotBufferSize; i += 3)
-  {
-    color.full = snapShotBufferPtr[i] + snapShotBufferPtr[i + 1] * 0x100;
-    snapShotBufferPtr[i] = (color.ch.red * 255) / 31;
-    snapShotBufferPtr[i + 1] = (color.ch.green * 255) / 63;
-    snapShotBufferPtr[i + 2] = (color.ch.blue * 255) / 31;
-  }
-
-  // return the buffer
-  *bufferPtr = snapShotBufferPtr;
-  *bufferSize = snapShotBufferSize;
 }
 
 // converts a style string to its enum
@@ -382,7 +352,7 @@ void publishLevelEvent(classTile *tPtr, const char *event, int value)
 
 // publish color picker change Event
 // {"screen":<number>, "tile":<number>, "style":"<style>", "type":"colorPicker", “event”:“change”, 
-// “state”:{"colorRGB":{"red":<val>, "green":<val>, "blue":<val>}, "colorTemperatur":<val>, "brightness":<val>}}
+// “state”:{"colorRGB":{"red":<val>, "green":<val>, "blue":<val>}, "colorTemperature":<val>, "brightness":<val>}}
 
 void publishColorPickerEvent(classTile *tPtr, const char *event, lv_color32_t rgb, int cct, int brightness)
 {
