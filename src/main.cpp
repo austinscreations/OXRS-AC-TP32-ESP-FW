@@ -40,6 +40,7 @@
 #include <classRemote.h>
 #include <classKeyPad.h>
 #include <classIconList.h>
+#include <classColorPicker.h>
 #include <base64.hpp>
 #include <TFT_eSPI.h>
 #include <lvgl.h>
@@ -167,6 +168,9 @@ classRemote remoteControl = classRemote();
 // key pad overlay
 classKeyPad keyPad = classKeyPad();
 
+// color picker overlay
+classColorPicker colorPicker = classColorPicker();
+
 /*--------------------------- screen / lvgl relevant  -----------------------------*/
 
 // Change to your screen resolution
@@ -224,7 +228,9 @@ void initStyleLut(void)
   styleLut[TS_BUTTON_LEFT_RIGHT] = {TS_BUTTON_LEFT_RIGHT, "buttonLeftRight"};
   styleLut[TS_BUTTON_PREV_NEXT] = {TS_BUTTON_PREV_NEXT, "buttonPrevNext"};
   styleLut[TS_INDICATOR] = {TS_INDICATOR, "indicator"};
-  styleLut[TS_COLOR_PICKER] = {TS_COLOR_PICKER, "colorPicker"};
+  styleLut[TS_COLOR_PICKER_RGB_CCT] = {TS_COLOR_PICKER_RGB_CCT, "colorPickerRgbCct"};
+  styleLut[TS_COLOR_PICKER_RGB] = {TS_COLOR_PICKER_RGB, "colorPickerRgb"};
+  styleLut[TS_COLOR_PICKER_CCT] = {TS_COLOR_PICKER_CCT, "colorPickerCct"};
   styleLut[TS_DROPDOWN] = {TS_DROPDOWN, "dropDown"};
   styleLut[TS_KEYPAD] = {TS_KEYPAD, "keyPad"};
   styleLut[TS_KEYPAD_BLOCKING] = {TS_KEYPAD_BLOCKING, "keyPadBlocking"};
@@ -342,6 +348,27 @@ void publishLevelEvent(classTile *tPtr, const char *event, int value)
   json["type"] = "level";
   json["event"] = event;
   json["state"] = value;
+
+  wt32.publishStatus(json.as<JsonVariant>());
+}
+
+// publish color picker change Event
+// {"screen":<number>, "tile":<number>, "style":"<style>", "type":"colorPicker", “event”:“change”, 
+// “state”:{"colorRGB":{"red":<val>, "green":<val>, "blue":<val>}, "colorTemperature":<val>, "brightness":<val>}}
+
+void publishColorPickerEvent(classTile *tPtr, const char *event, lv_color32_t rgb, int cct, int brightness)
+{
+  StaticJsonDocument<256> json;
+  json["screen"] = tPtr->getScreenIdx();
+  json["tile"] = tPtr->getTileIdx();
+  json["style"] = tPtr->getStyleStr();
+  json["type"] = "colorPicker";
+  json["event"] = "change";
+  json["state"]["colorRGB"]["red"]= rgb.ch.red;
+  json["state"]["colorRGB"]["green"] = rgb.ch.green;
+  json["state"]["colorRGB"]["blue"] = rgb.ch.blue;
+  json["state"]["colorTemperature"] = cct;
+  json["state"]["brightness"] = brightness;
 
   wt32.publishStatus(json.as<JsonVariant>());
 }
@@ -789,6 +816,21 @@ static void screenDropDownEventHandler(lv_event_t * e)
   }
 }
 
+// color picker event handler
+static void colorPickerEventHandler(lv_event_t *e)
+{
+  lv_event_code_t code = lv_event_get_code(e);
+  if ((code == LV_EVENT_VALUE_CHANGED) || (code == LV_EVENT_PRESS_LOST))
+  {
+    classTile *tPtr = (classTile *)lv_event_get_user_data(e);
+    colorPicker.updateAll();
+    lv_color32_t color32;
+    color32.full = lv_color_to32(tPtr->getColorPickerRGB());
+
+    publishColorPickerEvent(tPtr, "change", color32, tPtr->getColorPickerCCT(), tPtr->getColorPickerBrightness());
+  }
+}
+
 // general Tile Event Handler
 static void tileEventHandler(lv_event_t * e)
 {
@@ -823,7 +865,6 @@ static void tileEventHandler(lv_event_t * e)
       {
         keyPad = classKeyPad(tPtr, keyPadEventHandler);
       }
-
       //  publish click event
       else
       {
@@ -833,7 +874,27 @@ static void tileEventHandler(lv_event_t * e)
     // long press detected
     else
     {
-      publishTileEvent(tPtr, "hold");
+      // button is style COLOR_PICKER -> show color picker overlay
+      if (tPtr->getStyle() == TS_COLOR_PICKER_RGB_CCT)
+      {
+        colorPicker = classColorPicker(tPtr, colorPickerEventHandler, true, true);
+        colorPicker.updateAll();
+      }
+      else if (tPtr->getStyle() == TS_COLOR_PICKER_RGB)
+      {
+        colorPicker = classColorPicker(tPtr, colorPickerEventHandler, true, false);
+        colorPicker.updateAll();
+      }
+      else if (tPtr->getStyle() == TS_COLOR_PICKER_CCT)
+      {
+        colorPicker = classColorPicker(tPtr, colorPickerEventHandler, false, true);
+        colorPicker.updateAll();
+      }
+      // publish long press
+      else
+      {
+        publishTileEvent(tPtr, "hold");
+      }
     }
   }
 }
@@ -1056,8 +1117,9 @@ void createTile(const char *styleStr, int screenIdx, int tileIdx, const char *ic
     ref.setKeyPadEnable(true);
   }
 
-  // set indicator for modal screen
-  if ((style == TS_DROPDOWN) || (style == TS_REMOTE) || (style == TS_KEYPAD) || (style == TS_KEYPAD_BLOCKING))
+  // set indicator for modal pop up screen
+  if ((style == TS_DROPDOWN) || (style == TS_REMOTE) || (style == TS_KEYPAD) || (style == TS_KEYPAD_BLOCKING) ||
+      (style == TS_COLOR_PICKER_RGB) || (style == TS_COLOR_PICKER_CCT) || (style == TS_COLOR_PICKER_RGB_CCT))
   {
     ref.setDropDownIndicator();
   }
@@ -1486,6 +1548,13 @@ void jsonTileCommand(JsonVariant json)
   if (json.containsKey("selectorSelect"))
   {
     tile->setSelectorIndex(json["selectorSelect"].as<uint>());
+  }
+
+  if (json.containsKey("colorPicker"))
+  {
+    tile->setColorPickerRGB(json["colorPicker"]["colorRGB"]["red"], json["colorPicker"]["colorRGB"]["green"], json["colorPicker"]["colorRGB"]["blue"]);
+    tile->setColorPickerCCT(json["colorPicker"]["colorTemperature"]);
+    tile->setColorPickerBrightness(json["colorPicker"]["brightness"]);
   }
 }
 

@@ -661,3 +661,40 @@ bool classTile::getSelectorValid(void)
 {
   return (_selectorList.size() > 0);
 }
+
+// additional methods for color picker (interface)
+
+void classTile::setColorPickerRGB(lv_color_t rgb)
+{
+  _colorPickerRGB = rgb;
+}
+
+void classTile::setColorPickerRGB(int red, int green, int blue)
+{
+  _colorPickerRGB = lv_color_make(red, green, blue);
+}
+
+void classTile::setColorPickerCCT(int colorTemp)
+{
+  _colorPickerCCT = colorTemp;
+}
+
+void classTile::setColorPickerBrightness(int brightness)
+{
+  _colorPickerBrightness = brightness;
+}
+
+lv_color_t classTile::getColorPickerRGB(void)
+{
+  return _colorPickerRGB;
+}
+
+int classTile::getColorPickerCCT(void)
+{
+  return _colorPickerCCT;
+}
+
+int classTile::getColorPickerBrightness(void)
+{
+  return _colorPickerBrightness;
+}
