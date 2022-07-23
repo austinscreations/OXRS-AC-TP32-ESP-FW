@@ -228,7 +228,9 @@ void initStyleLut(void)
   styleLut[TS_BUTTON_LEFT_RIGHT] = {TS_BUTTON_LEFT_RIGHT, "buttonLeftRight"};
   styleLut[TS_BUTTON_PREV_NEXT] = {TS_BUTTON_PREV_NEXT, "buttonPrevNext"};
   styleLut[TS_INDICATOR] = {TS_INDICATOR, "indicator"};
-  styleLut[TS_COLOR_PICKER] = {TS_COLOR_PICKER, "colorPicker"};
+  styleLut[TS_COLOR_PICKER_RGB_CCT] = {TS_COLOR_PICKER_RGB_CCT, "colorPickerRgbCct"};
+  styleLut[TS_COLOR_PICKER_RGB] = {TS_COLOR_PICKER_RGB, "colorPickerRgb"};
+  styleLut[TS_COLOR_PICKER_CCT] = {TS_COLOR_PICKER_CCT, "colorPickerCct"};
   styleLut[TS_DROPDOWN] = {TS_DROPDOWN, "dropDown"};
   styleLut[TS_KEYPAD] = {TS_KEYPAD, "keyPad"};
   styleLut[TS_KEYPAD_BLOCKING] = {TS_KEYPAD_BLOCKING, "keyPadBlocking"};
@@ -873,9 +875,19 @@ static void tileEventHandler(lv_event_t * e)
     else
     {
       // button is style COLOR_PICKER -> show color picker overlay
-      if (tPtr->getStyle() == TS_COLOR_PICKER)
+      if (tPtr->getStyle() == TS_COLOR_PICKER_RGB_CCT)
       {
-        colorPicker = classColorPicker(tPtr, colorPickerEventHandler);
+        colorPicker = classColorPicker(tPtr, colorPickerEventHandler, true, true);
+        colorPicker.updateAll();
+      }
+      else if (tPtr->getStyle() == TS_COLOR_PICKER_RGB)
+      {
+        colorPicker = classColorPicker(tPtr, colorPickerEventHandler, true, false);
+        colorPicker.updateAll();
+      }
+      else if (tPtr->getStyle() == TS_COLOR_PICKER_CCT)
+      {
+        colorPicker = classColorPicker(tPtr, colorPickerEventHandler, false, true);
         colorPicker.updateAll();
       }
       // publish long press
@@ -1105,8 +1117,9 @@ void createTile(const char *styleStr, int screenIdx, int tileIdx, const char *ic
     ref.setKeyPadEnable(true);
   }
 
-  // set indicator for modal screen
-  if ((style == TS_DROPDOWN) || (style == TS_REMOTE) || (style == TS_KEYPAD) || (style == TS_KEYPAD_BLOCKING) || (style == TS_COLOR_PICKER))
+  // set indicator for modal pop up screen
+  if ((style == TS_DROPDOWN) || (style == TS_REMOTE) || (style == TS_KEYPAD) || (style == TS_KEYPAD_BLOCKING) ||
+      (style == TS_COLOR_PICKER_RGB) || (style == TS_COLOR_PICKER_CCT) || (style == TS_COLOR_PICKER_RGB_CCT))
   {
     ref.setDropDownIndicator();
   }

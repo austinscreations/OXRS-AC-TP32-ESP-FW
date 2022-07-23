@@ -8,8 +8,10 @@ class classColorPicker
 private:
   classTile* _callingTile = NULL;
   lv_obj_t* _parent = NULL;
-  lv_obj_t* _ovlPanel2 = NULL;
-  lv_obj_t* _btnExit = NULL;
+  lv_obj_t *_ovlPanel = NULL;
+  lv_obj_t *_panelRGB = NULL;
+  lv_obj_t *_panelCCT = NULL;
+  lv_obj_t *_btnExit = NULL;
   lv_obj_t *_colorWheel = NULL;
   lv_obj_t *_labelRed = NULL;
   lv_obj_t *_labelGreen = NULL;
@@ -26,12 +28,10 @@ private:
   static void _exitButtonEventHandler(lv_event_t *e);
 
 public:
-  lv_obj_t* ovlPanel = NULL;
 
   classColorPicker(void){};
-  classColorPicker(classTile* tile, lv_event_cb_t colorPickerEventHandler);
+  classColorPicker(classTile* tile, lv_event_cb_t colorPickerEventHandler, bool enRGB, bool enCCT);
   classTile* getTile(void);
   void updateAll(void);
-  void setRGB(int red, int green, int blue);
 
 };
