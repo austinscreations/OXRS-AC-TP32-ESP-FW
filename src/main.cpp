@@ -1488,13 +1488,13 @@ void jsonTileCommand(JsonVariant json)
     tile->setLevel(json["level"].as<int>(), false);
   }
 
-  if (json.containsKey("color"))
+  if (json.containsKey("colorRgb"))
   {
-    // TODO: convert to `{"red":red,"green":green,"blue":blue}` to match
-    //       colorPicker payloads
-    int red = json["color"][0];
-    int green = json["color"][1];
-    int blue = json["color"][2];
+    uint8_t red, green, blue;
+
+    red = (uint8_t)json["colorRgb"]["red"].as<int>();
+    green = (uint8_t)json["colorRgb"]["green"].as<int>();
+    blue = (uint8_t)json["colorRgb"]["blue"].as<int>();
 
     // if all zero reset to colorOn
     if ((red + green + blue) == 0)
