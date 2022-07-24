@@ -354,7 +354,7 @@ void publishLevelEvent(classTile *tPtr, const char *event, int value)
 
 // publish color picker change Event
 // {"screen":<number>, "tile":<number>, "style":"<style>", "type":"colorPicker", “event”:“change”, 
-// “state”:{"colorRGB":{"red":<val>, "green":<val>, "blue":<val>}, "colorTemperature":<val>, "brightness":<val>}}
+// “state”:{"colorRgb":{"red":<val>, "green":<val>, "blue":<val>}, "colorTemperature":<val>, "brightness":<val>}}
 
 void publishColorPickerEvent(classTile *tPtr, const char *event, lv_color32_t rgb, int cct, int brightness)
 {
@@ -364,9 +364,9 @@ void publishColorPickerEvent(classTile *tPtr, const char *event, lv_color32_t rg
   json["style"] = tPtr->getStyleStr();
   json["type"] = "colorPicker";
   json["event"] = "change";
-  json["state"]["colorRGB"]["red"]= rgb.ch.red;
-  json["state"]["colorRGB"]["green"] = rgb.ch.green;
-  json["state"]["colorRGB"]["blue"] = rgb.ch.blue;
+  json["state"]["colorRgb"]["red"]= rgb.ch.red;
+  json["state"]["colorRgb"]["green"] = rgb.ch.green;
+  json["state"]["colorRgb"]["blue"] = rgb.ch.blue;
   json["state"]["colorTemperature"] = cct;
   json["state"]["brightness"] = brightness;
 
@@ -1490,6 +1490,8 @@ void jsonTileCommand(JsonVariant json)
 
   if (json.containsKey("color"))
   {
+    // TODO: convert to `{"red":red,"green":green,"blue":blue}` to match
+    //       colorPicker payloads
     int red = json["color"][0];
     int green = json["color"][1];
     int blue = json["color"][2];
@@ -1552,7 +1554,7 @@ void jsonTileCommand(JsonVariant json)
 
   if (json.containsKey("colorPicker"))
   {
-    tile->setColorPickerRGB(json["colorPicker"]["colorRGB"]["red"], json["colorPicker"]["colorRGB"]["green"], json["colorPicker"]["colorRGB"]["blue"]);
+    tile->setColorPickerRGB(json["colorPicker"]["colorRgb"]["red"], json["colorPicker"]["colorRgb"]["green"], json["colorPicker"]["colorRgb"]["blue"]);
     tile->setColorPickerCCT(json["colorPicker"]["colorTemperature"]);
     tile->setColorPickerBrightness(json["colorPicker"]["brightness"]);
   }
